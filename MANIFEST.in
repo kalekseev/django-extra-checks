@@ -1,0 +1,8 @@
+include LICENSE *.md *.ini *.yml *.yaml
+graft .github
+
+
+recursive-include tests *.py
+
+global-exclude __pycache__
+global-exclude *.py[co]
