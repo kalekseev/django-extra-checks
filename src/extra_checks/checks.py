@@ -1,5 +1,6 @@
 import ast
-from typing import Any, ClassVar, Iterator, Optional, Set, Type
+from abc import ABC, abstractmethod
+from typing import Any, ClassVar, Iterator, List, Optional, Set, Type
 
 import django.core.checks
 from django.db import models
@@ -17,7 +18,7 @@ MESSAGE_MAP = {
 }
 
 
-class Check:
+class Check(ABC):
     ID: CheckID
     settings_form_class: ClassVar[Type[forms.CheckForm]] = forms.CheckForm
     level = django.core.checks.WARNING
@@ -30,12 +31,7 @@ class Check:
         self, obj: Any, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if not self.is_ignored(obj):
-            yield from self.apply(obj, **kwargs)
-
-    def apply(
-        self, obj: Any, **kwargs: Any
-    ) -> Iterator[django.core.checks.CheckMessage]:
-        pass
+            yield from self.apply(obj, **kwargs)  # type: ignore
 
     def is_ignored(self, obj: Any) -> bool:
         return obj in self.ignored_objects
@@ -46,7 +42,7 @@ class Check:
         return MESSAGE_MAP[self.level](message, hint=hint, obj=obj, id=self.ID.value)
 
 
-@register("extra_checks_health")
+@register("extra_checks_selfcheck")
 class CheckX001(Check):
     ID = CheckID.X001
     level = django.core.checks.CRITICAL
@@ -62,89 +58,84 @@ class CheckX001(Check):
             )
 
 
-@register("extra_checks_model", django.core.checks.Tags.models)
-class CheckX002(Check):
-    ID = CheckID.X002
-
+class ModelCheck(Check):
+    @abstractmethod
     def apply(
-        self, obj: Any, **kwargs: Any
+        self, model: Type[models.Model], model_ast: ModelAST
     ) -> Iterator[django.core.checks.CheckMessage]:
-        for field in obj._meta.fields:
-            if isinstance(field, models.FileField):
-                if not field.upload_to:
-                    yield self.message(
-                        f'Field "{field.name}" must have non empty "upload_to" attribute.',
-                        hint='Set "upload_to" on the field.',
-                        obj=obj,
-                    )
+        raise NotImplementedError()
 
 
-@register("extra_checks_model", django.core.checks.Tags.models)
-class CheckX003(Check):
+@register(django.core.checks.Tags.models)
+class CheckX003(ModelCheck):
     ID = CheckID.X003
     settings_form_class = forms.CheckAttrsForm
 
-    def __init__(self, attrs: Optional[str] = None, **kwargs: Any) -> None:
-        assert attrs
+    def __init__(self, attrs: List[str], **kwargs: Any) -> None:
         self.attrs = attrs
         super().__init__(**kwargs)
 
     def apply(
-        self, obj: Type[models.Model], **kwargs: Any
+        self, model: Type[models.Model], model_ast: ModelAST
     ) -> Iterator[django.core.checks.CheckMessage]:
         for attr in self.attrs:
             if (
-                not obj._meta.abstract
-                and not obj._meta.proxy
-                and not hasattr(obj, attr)
+                not model._meta.abstract
+                and not model._meta.proxy
+                and not hasattr(model, attr)
             ):
                 yield self.message(
                     f'Each model must specify "{attr}" attribute.',
                     hint=f'Set "{attr}" attribute.',
-                    obj=obj,
+                    obj=model,
                 )
 
 
-@register("extra_checks_model", django.core.checks.Tags.models)
-class CheckX004(Check):
+@register(django.core.checks.Tags.models)
+class CheckX004(ModelCheck):
     ID = CheckID.X004
     settings_form_class = forms.CheckMetaAttrsForm
 
-    def __init__(self, attrs: Optional[str] = None, **kwargs: Any) -> None:
-        assert attrs
+    def __init__(self, attrs: List[str], **kwargs: Any) -> None:
         self.attrs = attrs
         super().__init__(**kwargs)
 
     def apply(
-        self, obj: Type[models.Model], model_ast: ModelAST = None, **kwargs: Any
+        self, model: Type[models.Model], model_ast: ModelAST
     ) -> Iterator[django.core.checks.CheckMessage]:
-        assert model_ast
         for attr in self.attrs:
             if (
-                not obj._meta.abstract
-                and not obj._meta.proxy
+                not model._meta.abstract
+                and not model._meta.proxy
                 and attr not in model_ast.meta_vars
             ):
                 yield self.message(
                     f'Each model must specify "{attr}" attribute in its Meta.',
                     hint=f'Set "{attr}" attribute in Meta.',
-                    obj=obj,
+                    obj=model,
                 )
 
 
-@register("extra_checks_model_fields")
-class CheckX005(Check):
+class ModelFieldCheck(Check):
+    @abstractmethod
+    def apply(
+        self, field: Type[models.fields.Field], field_ast: FieldAST
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        raise NotImplementedError()
+
+
+@register(django.core.checks.Tags.models)
+class CheckX005(ModelFieldCheck):
     ID = CheckID.X005
 
     def apply(
-        self, obj: Type[models.fields.Field], field_ast: FieldAST = None, **kwargs: Any
+        self, field: Type[models.fields.Field], field_ast: FieldAST
     ) -> Iterator[django.core.checks.CheckMessage]:
-        assert field_ast
         if not field_ast.verbose_name:
             yield self.message(
                 "Field has no verbose name.",
                 hint="Set verbose name on the field.",
-                obj=obj,
+                obj=field,
             )
 
 
@@ -162,30 +153,28 @@ class GetTextMixin:
         )
 
 
-@register("extra_checks_model_fields")
-class CheckX006(GetTextMixin, Check):
+@register(django.core.checks.Tags.models)
+class CheckX006(GetTextMixin, ModelFieldCheck):
     ID = CheckID.X006
 
     def apply(
-        self, obj: Type[models.fields.Field], field_ast: FieldAST = None, **kwargs: Any
+        self, field: Type[models.fields.Field], field_ast: FieldAST
     ) -> Iterator[django.core.checks.CheckMessage]:
-        assert field_ast
         if field_ast.verbose_name and not self._is_gettext_node(field_ast.verbose_name):
             yield self.message(
                 "Verbose name should use gettext.",
                 hint="Use gettext on the verbose name.",
-                obj=obj,
+                obj=field,
             )
 
 
-@register("extra_checks_model_fields")
-class CheckX007(GetTextMixin, Check):
+@register(django.core.checks.Tags.models)
+class CheckX007(GetTextMixin, ModelFieldCheck):
     ID = CheckID.X007
 
     def apply(
-        self, obj: Type[models.fields.Field], field_ast: FieldAST = None, **kwargs: Any
+        self, field: Type[models.fields.Field], field_ast: FieldAST
     ) -> Iterator[django.core.checks.CheckMessage]:
-        assert field_ast
         if field_ast.verbose_name and self._is_gettext_node(field_ast.verbose_name):
             value = field_ast.verbose_name.args[0].s  # type: ignore
             if not all(
@@ -194,21 +183,83 @@ class CheckX007(GetTextMixin, Check):
                 yield django.core.checks.Warning(
                     "Words in verbose name must be all upper case or all lower case.",
                     hint='Change verbose name to "{}".'.format(value.lower()),
-                    obj=obj,
+                    obj=field,
                 )
 
 
-@register("extra_checks_model_fields")
-class CheckX008(GetTextMixin, Check):
+@register(django.core.checks.Tags.models)
+class CheckX008(GetTextMixin, ModelFieldCheck):
     ID = CheckID.X008
 
     def apply(
-        self, obj: Type[models.fields.Field], field_ast: FieldAST = None, **kwargs: Any
+        self, field: Type[models.fields.Field], field_ast: FieldAST
     ) -> Iterator[django.core.checks.CheckMessage]:
-        assert field_ast
         if field_ast.help_text and not self._is_gettext_node(field_ast.help_text):
             yield django.core.checks.Warning(
                 "Help text should use gettext.",
                 hint="Use gettext on the help text.",
-                obj=obj,
+                obj=field,
+            )
+
+
+@register(django.core.checks.Tags.models)
+class CheckX002(ModelFieldCheck):
+    ID = CheckID.X002
+
+    def apply(
+        self, field: Type[models.fields.Field], field_ast: FieldAST
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        if isinstance(field, models.FileField):
+            if not field.upload_to:
+                yield self.message(
+                    f'Field "{field.name}" must have non empty "upload_to" attribute.',
+                    hint='Set "upload_to" on the field.',
+                    obj=field,
+                )
+
+
+@register(django.core.checks.Tags.models)
+class CheckX009(ModelFieldCheck):
+    ID = CheckID.X009
+
+    def apply(
+        self, field: Type[models.fields.Field], field_ast: FieldAST
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        if isinstance(field, (models.CharField, models.TextField)):
+            if field.null:
+                yield self.message(
+                    f'Field "{field.name}" shouldn\'t use `null=True` '
+                    "(django uses empty string for text fields).",
+                    hint="Remove `null=True` attribute from the field.",
+                    obj=field,
+                )
+
+
+@register(django.core.checks.Tags.models)
+class CheckX010(ModelFieldCheck):
+    ID = CheckID.X010
+
+    def apply(
+        self, field: Type[models.fields.Field], field_ast: FieldAST
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        if isinstance(field, models.NullBooleanField):
+            yield self.message(
+                f'Field "{field.name}" should be `BooleanField` with attribute `null=True`.',
+                hint="Replace `NullBooleanField` by `BooleanField` with attribute `null=True`.",
+                obj=field,
+            )
+
+
+@register(django.core.checks.Tags.models)
+class CheckX011(ModelFieldCheck):
+    ID = CheckID.X011
+
+    def apply(
+        self, field: Type[models.fields.Field], field_ast: FieldAST
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        if field.null is False and "null" in field_ast.kwargs:
+            yield self.message(
+                "Argument `null=False` is default.",
+                hint="Remove `null=False` from field arguments.",
+                obj=field,
             )

@@ -11,9 +11,14 @@ class CheckID(str, enum.Enum):
     X006 = "X006"
     X007 = "X007"
     X008 = "X008"
+    X009 = "X009"
+    X010 = "X010"
+    X011 = "X011"
 
 
 _IGNORED = {}
+
+EXTRA_CHECKS_ALL_RULES = list(CheckID.__members__.keys())
 
 
 def ignore_checks(*args: CheckID) -> Callable[[Any], Any]:

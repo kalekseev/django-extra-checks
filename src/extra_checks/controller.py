@@ -50,7 +50,7 @@ class Registry:
             return inner
 
         django.core.checks.register(
-            f(controller.check_extra_checks_health), "extra_checks_health"
+            f(controller.check_extra_checks_health), "extra_checks_selfcheck"
         )
         django.core.checks.register(
             f(controller.check_models), django.core.checks.Tags.models
@@ -98,32 +98,41 @@ class ChecksController:
     def check_extra_checks_health(
         self, app_configs: Optional[List[Any]], **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        for check in self.registered_checks.get("extra_checks_health", []):
+        for check in self.registered_checks.get("extra_checks_selfcheck", []):
             yield from check(self)
 
-    def check_models(
-        self, app_configs: Optional[List[Any]], **kwargs: Any
-    ) -> Iterator[Any]:
+    def _get_models_to_check(self, app_configs: Optional[List[Any]]):
         apps = (
             django.apps.apps.get_app_configs() if app_configs is None else app_configs
         )
         site_prefixes = set(site.PREFIXES)
         for app in apps:
             if not any(app.path.startswith(path) for path in site_prefixes):
-                for model in app.get_models():
-                    model_ast = ModelAST(model)
-                    for check in self.registered_checks.get(
-                        django.core.checks.Tags.models, []
-                    ):
-                        yield from check(model, model_ast=model_ast)
-                    extra_checks_model_fields = self.registered_checks.get(
-                        "extra_checks_model_fields", []
-                    )
-                    if extra_checks_model_fields:
-                        for field, node in model_ast.field_nodes:
-                            field_ast = FieldAST(node)
-                            for check in extra_checks_model_fields:
-                                yield from check(field, field_ast=field_ast)
+                yield from app.get_models()
+
+    def check_models(
+        self, app_configs: Optional[List[Any]], **kwargs: Any
+    ) -> Iterator[Any]:
+        from .checks import ModelFieldCheck
+
+        model_checks = []
+        field_checks = []
+        for check in self.registered_checks.get(django.core.checks.Tags.models, []):
+            if isinstance(check, ModelFieldCheck):
+                field_checks.append(check)
+            else:
+                model_checks.append(check)
+        if not model_checks and not field_checks:
+            return
+        for model in self._get_models_to_check(app_configs):
+            model_ast = ModelAST(model)
+            for check in model_checks:
+                yield from check(model, model_ast=model_ast)
+            if field_checks:
+                for field, node in model_ast.field_nodes:
+                    field_ast = FieldAST(node)
+                    for check in field_checks:
+                        yield from check(field, field_ast=field_ast)
 
 
 registry = Registry()

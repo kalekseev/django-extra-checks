@@ -30,7 +30,20 @@ setup(
     ],
     include_package_data=True,
     zip_safe=False,
-    extras_require={"dev": ["pytest", "pytest-django", "pytest-cov", "Django"]},
+    extras_require={
+        "dev": [
+            "pytest",
+            "pytest-django",
+            "pytest-cov",
+            "Django",
+            "mypy<0.780",
+            "django-stubs==1.5.0",
+            "flake8",
+            "flake8-bugbear",
+            "pre-commit",
+            "isort",
+        ]
+    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
