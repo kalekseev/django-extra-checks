@@ -42,6 +42,8 @@ setup(
             "flake8-bugbear",
             "pre-commit",
             "isort",
+            "pdbpp",
+            "tox",
         ]
     },
     classifiers=[

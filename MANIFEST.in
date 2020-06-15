@@ -2,6 +2,7 @@ include LICENSE *.md *.ini *.yml *.yaml
 graft .github
 
 
+include src/extra_checks/py.typed
 recursive-include tests *.py
 
 global-exclude __pycache__

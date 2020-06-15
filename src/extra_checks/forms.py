@@ -5,7 +5,7 @@ from django import forms
 from django.db.models.options import DEFAULT_NAMES as META_ATTRS
 from django.utils.translation import gettext_lazy as _
 
-from . import CheckID
+from . import CheckId
 
 
 class ListField(forms.Field):
@@ -13,7 +13,7 @@ class ListField(forms.Field):
         "invalid_list": _("Enter a list of values."),
     }
 
-    def __init__(self, base_field, **kwargs):
+    def __init__(self, base_field: forms.Field, **kwargs: typing.Any) -> None:
         self.base_field = base_field
         super().__init__(**kwargs)
 
@@ -40,12 +40,14 @@ class UnionField(forms.Field):
         "type_invalid": _("%(value)s is not one of the available types."),
     }
 
-    def __init__(self, base_fields, **kwargs):
+    def __init__(
+        self, base_fields: typing.Dict[typing.Any, forms.Field], **kwargs: typing.Any
+    ) -> None:
         assert isinstance(base_fields, dict)
         self.base_fields = base_fields
         super().__init__(**kwargs)
 
-    def to_python(self, value: typing.Any) -> list:
+    def to_python(self, value: typing.Any) -> typing.Any:
         for type_, field in self.base_fields.items():
             if isinstance(value, type_):
                 return field.to_python(value)
@@ -69,7 +71,9 @@ class DictField(forms.ChoiceField):
         "id_required": _("`id` field is required."),
     }
 
-    def __init__(self, id_choices, **kwargs):
+    def __init__(
+        self, id_choices: typing.List[typing.Tuple[str, str]], **kwargs: typing.Any
+    ) -> None:
         super().__init__(choices=id_choices, **kwargs)
 
     def to_python(self, value: typing.Any) -> dict:
@@ -103,14 +107,18 @@ class ConfigForm(forms.Form):
         UnionField(
             {
                 str: forms.ChoiceField(
-                    choices=CheckID.__members__.items(),
+                    choices=[(v.value, v.value) for v in CheckId.__members__.values()],
                     error_messages={
                         "invalid_choice": _(
                             "%(value)s is not one of the available checks."
                         ),
                     },
                 ),
-                dict: DictField(id_choices=CheckID.__members__.items()),
+                dict: DictField(
+                    id_choices=[
+                        (v.value, v.value) for v in CheckId.__members__.values()
+                    ]
+                ),
             }
         ),
         required=False,
@@ -125,7 +133,7 @@ class ConfigForm(forms.Form):
                 result[check["id"]] = check
         return result
 
-    def is_valid(self, check_forms: typing.Dict[CheckID, "typing.Type[CheckForm]"]) -> bool:  # type: ignore
+    def is_valid(self, check_forms: typing.Dict[CheckId, "typing.Type[CheckForm]"]) -> bool:  # type: ignore
         if not super().is_valid():
             return False
         checks = self.cleaned_data.get("checks", {})

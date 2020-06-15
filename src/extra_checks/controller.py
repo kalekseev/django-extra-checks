@@ -9,19 +9,21 @@ from typing import (
     Optional,
     Sequence,
     Type,
+    Union,
 )
 
 import django.apps
 import django.core.checks
 from django import forms
 from django.conf import settings
+from django.db import models
 
-from . import _IGNORED, CheckID
+from . import _IGNORED, CheckId
 from .ast import FieldAST, ModelAST
 from .forms import ConfigForm
 
 if TYPE_CHECKING:
-    from .checks import Check
+    from .checks import BaseCheck
 
 
 DEFAULT_CONFIG: dict = {
@@ -31,10 +33,10 @@ DEFAULT_CONFIG: dict = {
 
 class Registry:
     def __init__(self) -> None:
-        self.checks: Dict["Type[Check]", Sequence[str]] = {}
+        self.checks: Dict["Type[BaseCheck]", Sequence[str]] = {}
 
-    def register(self, *tags: str) -> Callable[["Type[Check]"], "Type[Check]"]:
-        def inner(check_class: "Type[Check]") -> "Type[Check]":
+    def register(self, *tags: str) -> Callable[["Type[BaseCheck]"], "Type[BaseCheck]"]:
+        def inner(check_class: "Type[BaseCheck]") -> "Type[BaseCheck]":
             self.checks[check_class] = tags
             return check_class
 
@@ -60,30 +62,32 @@ class Registry:
 class ChecksController:
     def __init__(
         self,
-        checks: Dict["Type[Check]", Sequence[str]],
-        config: Dict[CheckID, dict] = None,
-        errors: forms.utils.ErrorDict = None,
+        checks: Dict["Type[BaseCheck]", Sequence[str]],
+        config: Optional[Dict[CheckId, dict]] = None,
+        errors: Optional[forms.utils.ErrorDict] = None,
     ) -> None:
         checks = checks or {}
-        config = config or {CheckID.X001: {}}
+        config = config or {CheckId.X001: {}}
         self.errors = errors
-        self.registered_checks: Dict[str, List["Check"]] = {}
-        self.ignored: Dict[CheckID, set] = {}
+        self.registered_checks: Dict[str, List["BaseCheck"]] = {}
+        self.ignored: Dict[Union[CheckId, str], set] = {}
         for obj, ids in _IGNORED.items():
             for id_ in ids:
                 self.ignored.setdefault(id_, set()).add(obj)
         for check_class, tags in checks.items():
-            if check_class.ID in config:
+            if check_class.Id in config:
                 check = check_class(
-                    ignored_objects=self.ignored.get(check_class.ID, set()),
-                    **config[check_class.ID],
+                    ignored_objects=self.ignored.get(check_class.Id, set()),
+                    **config[check_class.Id],
                 )
                 for tag in tags:
                     self.registered_checks.setdefault(tag, []).append(check)
 
     @classmethod
-    def create(cls, checks: Dict["Type[Check]", Sequence[str]]) -> "ChecksController":
-        check_form = {r.ID: r.settings_form_class for r in checks}
+    def create(
+        cls, checks: Dict["Type[BaseCheck]", Sequence[str]]
+    ) -> "ChecksController":
+        check_form = {r.Id: r.settings_form_class for r in checks}
         if not hasattr(settings, "EXTRA_CHECKS"):
             return cls(checks=checks)
         form = ConfigForm(settings.EXTRA_CHECKS)  # type: ignore
@@ -101,7 +105,9 @@ class ChecksController:
         for check in self.registered_checks.get("extra_checks_selfcheck", []):
             yield from check(self)
 
-    def _get_models_to_check(self, app_configs: Optional[List[Any]]):
+    def _get_models_to_check(
+        self, app_configs: Optional[List[Any]]
+    ) -> Iterator[Type[models.Model]]:
         apps = (
             django.apps.apps.get_app_configs() if app_configs is None else app_configs
         )

@@ -37,7 +37,7 @@ class ModelAST:
         source = inspect.getsource(self.model_cls)
         return iter(ast.parse(source).body[0].body)  # type: ignore
 
-    def _parse(self, predicate: Callable[[ast.AST], bool] = None) -> None:
+    def _parse(self, predicate: Optional[Callable[[ast.AST], bool]] = None) -> None:
         try:
             for node in self._nodes:
                 if predicate and predicate(node):
