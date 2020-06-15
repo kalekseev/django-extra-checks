@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Any, ClassVar, Iterator, Optional, Set, Type
+from typing import TYPE_CHECKING, Any, ClassVar, Iterator, Optional, Set, Type
 
 import django.core.checks
 
@@ -16,7 +16,7 @@ MESSAGE_MAP = {
 
 class BaseCheck(ABC):
     Id: CheckId
-    settings_form_class: ClassVar[Type[forms.CheckForm]] = forms.CheckForm
+    settings_form_class: ClassVar[Type[forms.BaseCheckForm]] = forms.BaseCheckForm
     level = django.core.checks.WARNING
 
     def __init__(
@@ -38,3 +38,9 @@ class BaseCheck(ABC):
         self, message: str, hint: Optional[str] = None, obj: Any = None
     ) -> django.core.checks.CheckMessage:
         return MESSAGE_MAP[self.level](message, hint=hint, obj=obj, id=self.Id.name)
+
+
+if TYPE_CHECKING:
+    BaseCheckMixin = BaseCheck
+else:
+    BaseCheckMixin = object

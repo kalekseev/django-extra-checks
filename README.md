@@ -44,6 +44,7 @@ class MyModel(models.Model):
 - **field-text-null** - text fields shoudn't use `null=True`.
 - **field-null-boolean** - prefer using `BooleanField(null=True)` instead of `NullBooleanField`.
 - **field-null-false** - don't pass `null=False` to model fields (this is django default).
+- **field-foreign-key-index** - ForeignKey fields must specify `db_index` explicitly.
 
 ## Development
 

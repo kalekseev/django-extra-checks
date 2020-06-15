@@ -2,12 +2,23 @@ from abc import abstractmethod
 from typing import Any, Iterator, List, Type
 
 import django.core.checks
+from django import forms
 from django.db import models
+from django.db.models.options import DEFAULT_NAMES as META_ATTRS
 
-from .. import CheckId, forms
+from .. import CheckId
 from ..ast import ModelAST
 from ..controller import register
+from ..forms import BaseCheckForm, ListField
 from .base_checks import BaseCheck
+
+
+class CheckAttrsForm(BaseCheckForm):
+    attrs = ListField(forms.CharField())
+
+
+class CheckMetaAttrsForm(BaseCheckForm):
+    attrs = forms.MultipleChoiceField(choices=[(o, o) for o in META_ATTRS])
 
 
 class ModelCheck(BaseCheck):
@@ -21,7 +32,7 @@ class ModelCheck(BaseCheck):
 @register(django.core.checks.Tags.models)
 class CheckModelAttribute(ModelCheck):
     Id = CheckId.X010
-    settings_form_class = forms.CheckAttrsForm
+    settings_form_class = CheckAttrsForm
 
     def __init__(self, attrs: List[str], **kwargs: Any) -> None:
         self.attrs = attrs
@@ -46,7 +57,7 @@ class CheckModelAttribute(ModelCheck):
 @register(django.core.checks.Tags.models)
 class CheckModelMetaAttribute(ModelCheck):
     Id = CheckId.X011
-    settings_form_class = forms.CheckMetaAttrsForm
+    settings_form_class = CheckMetaAttrsForm
 
     def __init__(self, attrs: List[str], **kwargs: Any) -> None:
         self.attrs = attrs

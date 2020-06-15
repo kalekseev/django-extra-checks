@@ -14,6 +14,7 @@ class CheckId(str, enum.Enum):
     X055 = "field-text-null"
     X056 = "field-null-boolean"
     X057 = "field-null-false"
+    X058 = "field-foreign-key-index"
 
 
 _IGNORED = {}

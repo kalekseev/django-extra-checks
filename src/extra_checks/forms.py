@@ -2,7 +2,6 @@ import typing
 
 import django.core.checks
 from django import forms
-from django.db.models.options import DEFAULT_NAMES as META_ATTRS
 from django.utils.translation import gettext_lazy as _
 
 from . import CheckId
@@ -133,7 +132,7 @@ class ConfigForm(forms.Form):
                 result[check["id"]] = check
         return result
 
-    def is_valid(self, check_forms: typing.Dict[CheckId, "typing.Type[CheckForm]"]) -> bool:  # type: ignore
+    def is_valid(self, check_forms: typing.Dict[CheckId, "typing.Type[BaseCheckForm]"]) -> bool:  # type: ignore
         if not super().is_valid():
             return False
         checks = self.cleaned_data.get("checks", {})
@@ -151,7 +150,7 @@ class ConfigForm(forms.Form):
         return False
 
 
-class CheckForm(forms.Form):
+class BaseCheckForm(forms.Form):
     level = forms.ChoiceField(
         choices=[(c, c) for c in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]],
         required=False,
@@ -161,15 +160,3 @@ class CheckForm(forms.Form):
         if self.cleaned_data["level"]:
             return getattr(django.core.checks, self.cleaned_data["level"])
         return None
-
-
-class CheckAttrsForm(CheckForm):
-    attrs = ListField(forms.CharField())
-
-
-class CheckMetaAttrsForm(CheckForm):
-    attrs = forms.MultipleChoiceField(choices=[(o, o) for o in META_ATTRS])
-
-
-class CheckGettTextFuncForm(CheckForm):
-    gettext_func = forms.CharField(required=False)

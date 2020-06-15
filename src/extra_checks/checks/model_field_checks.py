@@ -1,30 +1,40 @@
 import ast
 from abc import abstractmethod
-from typing import Any, ClassVar, Iterator, Type
+from typing import Any, Iterator, Type
 
 import django.core.checks
+from django import forms
 from django.db import models
 
-from .. import CheckId, forms
+from .. import CheckId
 from ..ast import FieldAST
 from ..controller import register
-from .base_checks import BaseCheck
+from ..forms import BaseCheckForm
+from .base_checks import BaseCheck, BaseCheckMixin
 
 
 class ModelFieldCheck(BaseCheck):
     @abstractmethod
     def apply(
-        self, field: models.fields.Field, field_ast: FieldAST
+        self,
+        field: models.fields.Field,
+        *,
+        field_ast: FieldAST,
+        model: Type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
         raise NotImplementedError()
 
 
-class GetTextMixin:
-    settings_form_class: ClassVar[Type[forms.CheckForm]] = forms.CheckGettTextFuncForm
+class CheckGettTextFuncForm(BaseCheckForm):
+    gettext_func = forms.CharField(required=False)
+
+
+class GetTextMixin(BaseCheckMixin):
+    settings_form_class = CheckGettTextFuncForm
 
     def __init__(self, gettext_func: str, **kwargs: Any) -> None:
         self.gettext_func = gettext_func or "_"
-        super().__init__(**kwargs)  # type: ignore
+        super().__init__(**kwargs)
 
     def _is_gettext_node(self, node: ast.AST) -> bool:
         return (
@@ -38,7 +48,7 @@ class CheckFieldVerboseName(ModelFieldCheck):
     Id = CheckId.X050
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldAST
+        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if not field_ast.verbose_name:
             yield self.message(
@@ -53,7 +63,7 @@ class CheckFieldVerboseNameGettext(GetTextMixin, ModelFieldCheck):
     Id = CheckId.X051
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldAST
+        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if field_ast.verbose_name and not self._is_gettext_node(field_ast.verbose_name):
             yield self.message(
@@ -68,7 +78,7 @@ class CheckFieldVerboseNameGettextCase(GetTextMixin, ModelFieldCheck):
     Id = CheckId.X052
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldAST
+        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if field_ast.verbose_name and self._is_gettext_node(field_ast.verbose_name):
             value = field_ast.verbose_name.args[0].s  # type: ignore
@@ -87,7 +97,7 @@ class CheckFieldHelpTextGettext(GetTextMixin, ModelFieldCheck):
     Id = CheckId.X053
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldAST
+        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if field_ast.help_text and not self._is_gettext_node(field_ast.help_text):
             yield self.message(
@@ -102,7 +112,7 @@ class CheckFieldFileUploadTo(ModelFieldCheck):
     Id = CheckId.X054
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldAST
+        self, field: models.fields.Field, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, models.FileField):
             if not field.upload_to:
@@ -118,7 +128,7 @@ class CheckFieldTextNull(ModelFieldCheck):
     Id = CheckId.X055
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldAST
+        self, field: models.fields.Field, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, (models.CharField, models.TextField)):
             if field.null:
@@ -135,7 +145,7 @@ class CheckFieldNullBoolean(ModelFieldCheck):
     Id = CheckId.X056
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldAST
+        self, field: models.fields.Field, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, models.NullBooleanField):
             yield self.message(
@@ -150,7 +160,7 @@ class CheckFieldNullFalse(ModelFieldCheck):
     Id = CheckId.X057
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldAST
+        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if field.null is False and "null" in field_ast.kwargs:
             yield self.message(
@@ -158,3 +168,41 @@ class CheckFieldNullFalse(ModelFieldCheck):
                 hint="Remove `null=False` from field arguments.",
                 obj=field,
             )
+
+
+class CheckFieldForeignKeyIndexForm(BaseCheckForm):
+    when = forms.ChoiceField(
+        choices=[("unique_together", "unique_together"), ("always", "always")],
+        required=False,
+    )
+
+
+@register(django.core.checks.Tags.models)
+class CheckFieldForeignKeyIndex(ModelFieldCheck):
+    Id = CheckId.X058
+    settings_form_class = CheckFieldForeignKeyIndexForm
+
+    def __init__(self, when: str, **kwargs: Any) -> None:
+        self.when = when or "unique_together"
+        super().__init__(**kwargs)
+
+    def apply(
+        self,
+        field: models.fields.Field,
+        field_ast: FieldAST,
+        model: Type[models.Model],
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        if field.many_to_one and field_ast.kwargs.get("db_index") is None:  # type: ignore
+            if self.when == "unique_together":
+                if any(field.name in index for index in model._meta.unique_together):
+                    yield self.message(
+                        "ForeignKey must set `db_index` explicitly if it present in unique_together",
+                        hint="Specify `db_index` field argument.",
+                        obj=field,
+                    )
+            else:
+                yield self.message(
+                    "ForeignKey must set `db_index` explicitly.",
+                    hint="Specify `db_index` field argument.",
+                    obj=field,
+                )

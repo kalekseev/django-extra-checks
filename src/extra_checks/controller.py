@@ -138,7 +138,7 @@ class ChecksController:
                 for field, node in model_ast.field_nodes:
                     field_ast = FieldAST(node)
                     for check in field_checks:
-                        yield from check(field, field_ast=field_ast)
+                        yield from check(field, field_ast=field_ast, model=model)
 
 
 registry = Registry()
