@@ -3,6 +3,7 @@ graft .github
 
 
 include src/extra_checks/py.typed
+include conftest.py
 recursive-include tests *.py
 
 global-exclude __pycache__

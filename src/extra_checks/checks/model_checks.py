@@ -13,15 +13,15 @@ from ..forms import BaseCheckForm, ListField
 from .base_checks import BaseCheck
 
 
-class CheckAttrsForm(BaseCheckForm):
+class AttrsForm(BaseCheckForm):
     attrs = ListField(forms.CharField())
 
 
-class CheckMetaAttrsForm(BaseCheckForm):
+class MetaAttrsForm(BaseCheckForm):
     attrs = forms.MultipleChoiceField(choices=[(o, o) for o in META_ATTRS])
 
 
-class ModelCheck(BaseCheck):
+class CheckModel(BaseCheck):
     @abstractmethod
     def apply(
         self, model: Type[models.Model], model_ast: ModelAST
@@ -30,9 +30,9 @@ class ModelCheck(BaseCheck):
 
 
 @register(django.core.checks.Tags.models)
-class CheckModelAttribute(ModelCheck):
+class CheckModelAttribute(CheckModel):
     Id = CheckId.X010
-    settings_form_class = CheckAttrsForm
+    settings_form_class = AttrsForm
 
     def __init__(self, attrs: List[str], **kwargs: Any) -> None:
         self.attrs = attrs
@@ -55,9 +55,9 @@ class CheckModelAttribute(ModelCheck):
 
 
 @register(django.core.checks.Tags.models)
-class CheckModelMetaAttribute(ModelCheck):
+class CheckModelMetaAttribute(CheckModel):
     Id = CheckId.X011
-    settings_form_class = CheckMetaAttrsForm
+    settings_form_class = MetaAttrsForm
 
     def __init__(self, attrs: List[str], **kwargs: Any) -> None:
         self.attrs = attrs

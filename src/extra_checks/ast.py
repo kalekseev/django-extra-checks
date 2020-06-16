@@ -122,6 +122,8 @@ class FieldAST:
             node = self.args[0]
             if isinstance(node, ast.Call) and hasattr(node.func, "id"):
                 return node
+            elif isinstance(node, (ast.Constant, ast.Str)):
+                return node
         return None
 
     @cached_property

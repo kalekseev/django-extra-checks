@@ -13,7 +13,7 @@ from ..forms import BaseCheckForm
 from .base_checks import BaseCheck, BaseCheckMixin
 
 
-class ModelFieldCheck(BaseCheck):
+class CheckModelField(BaseCheck):
     @abstractmethod
     def apply(
         self,
@@ -25,12 +25,12 @@ class ModelFieldCheck(BaseCheck):
         raise NotImplementedError()
 
 
-class CheckGettTextFuncForm(BaseCheckForm):
+class GettTextFuncForm(BaseCheckForm):
     gettext_func = forms.CharField(required=False)
 
 
 class GetTextMixin(BaseCheckMixin):
-    settings_form_class = CheckGettTextFuncForm
+    settings_form_class = GettTextFuncForm
 
     def __init__(self, gettext_func: str, **kwargs: Any) -> None:
         self.gettext_func = gettext_func or "_"
@@ -44,7 +44,7 @@ class GetTextMixin(BaseCheckMixin):
 
 
 @register(django.core.checks.Tags.models)
-class CheckFieldVerboseName(ModelFieldCheck):
+class CheckFieldVerboseName(CheckModelField):
     Id = CheckId.X050
 
     def apply(
@@ -59,7 +59,7 @@ class CheckFieldVerboseName(ModelFieldCheck):
 
 
 @register(django.core.checks.Tags.models)
-class CheckFieldVerboseNameGettext(GetTextMixin, ModelFieldCheck):
+class CheckFieldVerboseNameGettext(GetTextMixin, CheckModelField):
     Id = CheckId.X051
 
     def apply(
@@ -74,7 +74,7 @@ class CheckFieldVerboseNameGettext(GetTextMixin, ModelFieldCheck):
 
 
 @register(django.core.checks.Tags.models)
-class CheckFieldVerboseNameGettextCase(GetTextMixin, ModelFieldCheck):
+class CheckFieldVerboseNameGettextCase(GetTextMixin, CheckModelField):
     Id = CheckId.X052
 
     def apply(
@@ -93,7 +93,7 @@ class CheckFieldVerboseNameGettextCase(GetTextMixin, ModelFieldCheck):
 
 
 @register(django.core.checks.Tags.models)
-class CheckFieldHelpTextGettext(GetTextMixin, ModelFieldCheck):
+class CheckFieldHelpTextGettext(GetTextMixin, CheckModelField):
     Id = CheckId.X053
 
     def apply(
@@ -108,7 +108,7 @@ class CheckFieldHelpTextGettext(GetTextMixin, ModelFieldCheck):
 
 
 @register(django.core.checks.Tags.models)
-class CheckFieldFileUploadTo(ModelFieldCheck):
+class CheckFieldFileUploadTo(CheckModelField):
     Id = CheckId.X054
 
     def apply(
@@ -124,7 +124,7 @@ class CheckFieldFileUploadTo(ModelFieldCheck):
 
 
 @register(django.core.checks.Tags.models)
-class CheckFieldTextNull(ModelFieldCheck):
+class CheckFieldTextNull(CheckModelField):
     Id = CheckId.X055
 
     def apply(
@@ -141,7 +141,7 @@ class CheckFieldTextNull(ModelFieldCheck):
 
 
 @register(django.core.checks.Tags.models)
-class CheckFieldNullBoolean(ModelFieldCheck):
+class CheckFieldNullBoolean(CheckModelField):
     Id = CheckId.X056
 
     def apply(
@@ -156,7 +156,7 @@ class CheckFieldNullBoolean(ModelFieldCheck):
 
 
 @register(django.core.checks.Tags.models)
-class CheckFieldNullFalse(ModelFieldCheck):
+class CheckFieldNullFalse(CheckModelField):
     Id = CheckId.X057
 
     def apply(
@@ -178,7 +178,7 @@ class CheckFieldForeignKeyIndexForm(BaseCheckForm):
 
 
 @register(django.core.checks.Tags.models)
-class CheckFieldForeignKeyIndex(ModelFieldCheck):
+class CheckFieldForeignKeyIndex(CheckModelField):
     Id = CheckId.X058
     settings_form_class = CheckFieldForeignKeyIndexForm
 

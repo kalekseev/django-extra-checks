@@ -1,4 +1,5 @@
 import site
+from functools import partial
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -35,17 +36,24 @@ class Registry:
     def __init__(self) -> None:
         self.checks: Dict["Type[BaseCheck]", Sequence[str]] = {}
 
+    def _register(
+        self, tags: List[str], check_class: "Type[BaseCheck]"
+    ) -> "Type[BaseCheck]":
+        self.checks[check_class] = tags
+        return check_class
+
     def register(self, *tags: str) -> Callable[["Type[BaseCheck]"], "Type[BaseCheck]"]:
-        def inner(check_class: "Type[BaseCheck]") -> "Type[BaseCheck]":
-            self.checks[check_class] = tags
-            return check_class
+        return partial(self._register, tags)
 
-        return inner
-
-    def finish(self) -> None:
+    def finish(self) -> "ChecksController":
         controller = ChecksController.create(self.checks)
 
         def f(callback: Callable) -> Callable:
+            """
+            Django does `check.tags = ...`, callback is a method of the controller
+            and setattr will fail on it so we wrap method with a function.
+            """
+
             def inner(*args: Any, **kwargs: Any) -> Any:
                 return callback(*args, **kwargs)
 
@@ -57,6 +65,8 @@ class Registry:
         django.core.checks.register(
             f(controller.check_models), django.core.checks.Tags.models
         )
+
+        return controller
 
 
 class ChecksController:
@@ -100,7 +110,7 @@ class ChecksController:
         return not self.errors
 
     def check_extra_checks_health(
-        self, app_configs: Optional[List[Any]], **kwargs: Any
+        self, app_configs: Optional[List[Any]] = None, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         for check in self.registered_checks.get("extra_checks_selfcheck", []):
             yield from check(self)
@@ -117,14 +127,14 @@ class ChecksController:
                 yield from app.get_models()
 
     def check_models(
-        self, app_configs: Optional[List[Any]], **kwargs: Any
+        self, app_configs: Optional[List[Any]] = None, **kwargs: Any
     ) -> Iterator[Any]:
-        from .checks import ModelFieldCheck
+        from .checks import CheckModelField
 
         model_checks = []
         field_checks = []
         for check in self.registered_checks.get(django.core.checks.Tags.models, []):
-            if isinstance(check, ModelFieldCheck):
+            if isinstance(check, CheckModelField):
                 field_checks.append(check)
             else:
                 model_checks.append(check)
