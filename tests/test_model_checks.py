@@ -6,7 +6,9 @@ from tests.example.models import Article, Author
 
 def test_check_model_attrs(settings, use_models, registry):
     use_models(Article)
-    settings.EXTRA_CHECKS = {"checks": [{"id": "model-attribute", "attrs": ["site"]}]}
+    settings.EXTRA_CHECKS = {
+        "checks": [{"id": model_checks.CheckModelAttribute.Id.value, "attrs": ["site"]}]
+    }
     registry._register(
         [django.core.checks.Tags.models], model_checks.CheckModelAttribute
     )

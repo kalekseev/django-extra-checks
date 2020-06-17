@@ -27,8 +27,8 @@ def test_empty_config(registry, settings):
 def test_error_formatting(registry, settings):
     settings.EXTRA_CHECKS = {
         "checks": [
-            "field-file-upload-to",
-            {"id": "field-foreign-key-index", "when": "random"},
+            CheckFieldFileUploadTo.Id.value,
+            {"id": CheckFieldForeignKeyIndex.Id.value, "when": "random"},
         ]
     }
     registry._register([django.core.checks.Tags.models], CheckFieldForeignKeyIndex)
@@ -40,10 +40,10 @@ def test_error_formatting(registry, settings):
     assert (
         messages[0].hint
         == textwrap.dedent(
-            """
+            f"""
             Fix EXTRA_CHECKS in your settings. Errors:
             * checks
-              * field-foreign-key-index
+              * {CheckFieldForeignKeyIndex.Id.value}
                 * when
                   * Select a valid choice. random is not one of the available choices.
             """

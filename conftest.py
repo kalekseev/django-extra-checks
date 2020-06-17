@@ -1,4 +1,5 @@
 import pytest
+
 from extra_checks.checks.self_checks import CheckConfig
 from extra_checks.controller import Registry
 

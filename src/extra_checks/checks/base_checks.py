@@ -37,7 +37,9 @@ class BaseCheck(ABC):
     def message(
         self, message: str, hint: Optional[str] = None, obj: Any = None
     ) -> django.core.checks.CheckMessage:
-        return MESSAGE_MAP[self.level](message, hint=hint, obj=obj, id=self.Id.name)
+        return MESSAGE_MAP[self.level](
+            message + f" [{self.Id.value}]", hint=hint, obj=obj, id=self.Id.name
+        )
 
 
 if TYPE_CHECKING:
