@@ -1,0 +1,109 @@
+name: Django Extra Checks CI
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - v*
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python: [3.6, 3.7, 3.8, 3.9]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        if: matrix.python-version != '3.9'
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: deadsnakes/action@v1.0.0
+        if: matrix.python-version == '3.9'
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Tox
+        run: python -m pip install tox tox-gh-actions
+      - name: Run Tox
+        run: python -m tox
+
+  package:
+    runs-on: ubuntu-latest
+    needs: tests
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+      - name: Install dependencies
+        run: |
+          python -m pip install setuptools wheel twine
+      - name: Package
+        run: |
+          python setup.py sdist bdist_wheel
+          twine check dist/*
+      - name: Upload dist
+        uses: actions/upload-artifact@v1
+        with:
+          name: dist
+          path: dist
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: [tests, package]
+    if: startsWith(github.ref, 'refs/tags/v')
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set release env
+        id: release_output
+        run: |
+          VERSION=$(awk '$1 == "version" {print $3}' setup.cfg)
+          TAG_VERSION="${GITHUB_REF:11}"
+          if [[ "$VERSION" != "$TAG_VERSION" ]]; then
+            echo "Tag doesn't match package version."
+            exit 1
+          fi
+          BODY=$(awk -v RS='### ' '/'$VERSION'.*/ {print $0}' CHANGELOG.md)
+          if [[ -z "$BODY" ]]; then
+            echo "No changelog record for version $VERSION."
+          fi
+          BODY="${BODY//'%'/'%25'}"
+          BODY="${BODY//$'\n'/'%0A'}"
+          BODY="${BODY//$'\r'/'%0D'}"
+          echo "::set-output name=VERSION::${VERSION}"
+          echo "::set-output name=BODY::${BODY}"
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+      - name: Download dist
+        uses: actions/download-artifact@v1
+        with:
+          name: dist
+      - name: Install dependencies
+        run: |
+          python -m pip install twine
+      - name: Publish
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          twine upload dist/*
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.release_output.outputs.VERSION }}
+          body: ${{ steps.release_output.outputs.BODY }}
+          draft: false
+          prerelease: false
