@@ -170,3 +170,7 @@ class BaseCheckForm(forms.Form):
         if self.cleaned_data["level"]:
             return getattr(django.core.checks, self.cleaned_data["level"])
         return None
+
+
+class AttrsForm(BaseCheckForm):
+    attrs = ListField(forms.CharField())

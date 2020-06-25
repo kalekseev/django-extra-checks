@@ -9,7 +9,7 @@ from django.db.models.options import DEFAULT_NAMES as META_ATTRS
 
 from .. import CheckId
 from ..ast import FieldAST, ModelAST
-from ..forms import BaseCheckForm, ListField
+from ..forms import AttrsForm, BaseCheckForm
 from ..registry import ChecksConfig, registry
 from .base_checks import BaseCheck
 
@@ -60,10 +60,6 @@ def check_models(
                 field_ast = FieldAST(node)
                 for check in field_checks:
                     yield from check(field, field_ast=field_ast, model=model)
-
-
-class AttrsForm(BaseCheckForm):
-    attrs = ListField(forms.CharField())
 
 
 class MetaAttrsForm(BaseCheckForm):

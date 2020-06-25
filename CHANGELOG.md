@@ -2,6 +2,9 @@
 
 ### Unreleased
 
+- Add infra for rest framework serializers checks
+- Add checks drf-model-serializer-extra-kwargs, drf-model-serializer-meta-attribute
+
 ### 0.3.0
 
 - Add `include_apps` option.

@@ -44,6 +44,8 @@ class MyModel(models.Model):
 
 ## Checks
 
+### Models
+
 - **extra-checks-config** - settings.EXTRA_CHECKS is valid config for django-extra-checks (always enabled).
 - **model-attribute** - Each Model in the project must have all attributes from `attrs` setting specified.
 - **model-meta-attribute** - Each Model.Meta in the project must have all attributes from `attrs` setting specified.
@@ -55,7 +57,12 @@ class MyModel(models.Model):
 - **field-text-null** - text fields shoudn't use `null=True`.
 - **field-boolean-null** - prefer using `BooleanField(null=True)` instead of `NullBooleanField`.
 - **field-null-false** - don't pass `null=False` to model fields (this is django default).
-- **field-foreign-key-index** - ForeignKey fields must specify `db_index` explicitly.
+- **field-foreign-key-index** - ForeignKey fields must specify `db_index` explicitly (to apply to unique together only: `when: unique_together`).
+
+### DRF Serializers
+
+- **drf-model-serializer-extra-kwargs** - ModelSerializer's extra_kwargs must not include fields that specified on serializer.
+- **drf-model-serializer-meta-attribute** - Each ModelSerializer.Meta must have all attributes specified in `attrs`, [good use case](https://hakibenita.com/django-rest-framework-slow#bonus-forcing-good-habits).
 
 ## Development
 
@@ -66,3 +73,4 @@ Install dev deps in virtualenv `pip install -e .[dev]`.
 The project was built using ideas and code snippets from:
 
 - [Haki Benita](https://medium.com/@hakibenita/automating-the-boring-stuff-in-django-using-the-check-framework-3495fb550a6a)
+- [Jon Dufresne](https://github.com/jdufresne/django-check-admin)
