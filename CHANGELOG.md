@@ -2,10 +2,14 @@
 
 ### Unreleased
 
+### 0.2.1
+
+- Fix ast parsing of indented block #1
+
 ### 0.2.0
 
-- first public release
+- First public release
 
 ### 0.1.0
 
-- first alpha
+- First alpha
