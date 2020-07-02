@@ -14,9 +14,11 @@ class Article(models.Model):
         verbose_name = "Site Article"
 
 
-class Author(models.Model):
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+if True:
+    # test that indentation doesn't break ast parser
+    class Author(models.Model):
+        first_name = models.CharField(max_length=100)
+        last_name = models.CharField(max_length=100)
 
 
 class NestedField(models.Field):

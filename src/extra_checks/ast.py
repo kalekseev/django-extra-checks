@@ -1,5 +1,6 @@
 import ast
 import inspect
+import textwrap
 from typing import (
     Callable,
     Dict,
@@ -34,7 +35,7 @@ class ModelAST:
 
     @cached_property
     def _nodes(self) -> Iterator[ast.AST]:
-        source = inspect.getsource(self.model_cls)
+        source = textwrap.dedent(inspect.getsource(self.model_cls))
         return iter(ast.parse(source).body[0].body)  # type: ignore
 
     def _parse(self, predicate: Optional[Callable[[ast.AST], bool]] = None) -> None:
