@@ -42,7 +42,7 @@ class MyModel(models.Model):
 - **field-verbose-name-gettext-case** - Words in text wrapped with gettext must be in one case.
 - **field-help-text-gettext** - help_text must use gettext.
 - **field-text-null** - text fields shoudn't use `null=True`.
-- **field-null-boolean** - prefer using `BooleanField(null=True)` instead of `NullBooleanField`.
+- **field-boolean-null** - prefer using `BooleanField(null=True)` instead of `NullBooleanField`.
 - **field-null-false** - don't pass `null=False` to model fields (this is django default).
 - **field-foreign-key-index** - ForeignKey fields must specify `db_index` explicitly.
 
