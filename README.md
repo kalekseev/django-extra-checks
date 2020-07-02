@@ -21,6 +21,17 @@ EXTRA_CHECKS = {
 }
 ```
 
+By default only your project apps are checked but you can use
+`include_apps` option to specify apps to check (including third party apps):
+
+```python
+EXTRA_CHECKS = {
+    # use same names as in INSTALLED_APPS
+    "include_apps": ["django.contrib.sites", "my_app"],
+    ...
+}
+```
+
 To ignore model warnings you can use `ignore_checks` decorator, eg:
 
 ```python

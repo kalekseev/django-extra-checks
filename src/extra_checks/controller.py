@@ -5,6 +5,7 @@ from typing import (
     Any,
     Callable,
     Dict,
+    Iterable,
     Iterator,
     List,
     Optional,
@@ -75,10 +76,12 @@ class ChecksController:
         checks: Dict["Type[BaseCheck]", Sequence[str]],
         config: Optional[Dict[CheckId, dict]] = None,
         errors: Optional[forms.utils.ErrorDict] = None,
+        include_apps: Optional[Iterable[str]] = None,
     ) -> None:
         checks = checks or {}
         config = config or {CheckId.X001: {}}
         self.errors = errors
+        self.include_apps = include_apps
         self.registered_checks: Dict[str, List["BaseCheck"]] = {}
         self.ignored: Dict[Union[CheckId, str], set] = {}
         for obj, ids in _IGNORED.items():
@@ -100,9 +103,13 @@ class ChecksController:
         check_form = {r.Id: r.settings_form_class for r in checks}
         if not hasattr(settings, "EXTRA_CHECKS"):
             return cls(checks=checks)
-        form = ConfigForm(settings.EXTRA_CHECKS)  # type: ignore
+        form = ConfigForm(settings.EXTRA_CHECKS)
         if form.is_valid(check_form):
-            return cls(checks=checks, config=form.cleaned_data["checks"])
+            return cls(
+                checks=checks,
+                config=form.cleaned_data["checks"],
+                include_apps=form.cleaned_data.get("include_apps"),
+            )
         return cls(checks=checks, errors=form.errors)
 
     @property
@@ -122,6 +129,11 @@ class ChecksController:
             django.apps.apps.get_app_configs() if app_configs is None else app_configs
         )
         site_prefixes = set(site.PREFIXES)
+        if self.include_apps is not None:
+            for app in apps:
+                if app.name in self.include_apps:
+                    yield from app.get_models()
+            return
         for app in apps:
             if not any(app.path.startswith(path) for path in site_prefixes):
                 yield from app.get_models()

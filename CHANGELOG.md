@@ -2,6 +2,8 @@
 
 ### Unreleased
 
+- Add `include_apps` option.
+
 ### 0.2.1
 
 - Fix ast parsing of indented block #1

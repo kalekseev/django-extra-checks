@@ -108,6 +108,26 @@ def test_config_form():
     }
 
 
+def test_config_include_apps():
+    form = ConfigForm(data={"checks": []})
+    assert form.is_valid({})
+    assert form.cleaned_data == {"checks": {}}
+
+    form = ConfigForm(data={"include_apps": [], "checks": []})
+    assert form.is_valid({})
+    assert form.cleaned_data == {"include_apps": [], "checks": {}}
+
+    form = ConfigForm(data={"include_apps": ["my_app"], "checks": []})
+    assert not form.is_valid({})
+    assert form.errors == {
+        "include_apps": ["'my_app' is not present in INSTALLED_APPS."]
+    }
+
+    form = ConfigForm(data={"include_apps": ["tests.example"], "checks": []})
+    assert form.is_valid({})
+    assert form.cleaned_data == {"include_apps": ["tests.example"], "checks": {}}
+
+
 def test_controller(settings):
     controller = ChecksController.create(checks={CheckFieldFileUploadTo: ["tag"]})
     assert controller.is_healthy

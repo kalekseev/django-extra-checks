@@ -2,6 +2,7 @@ import typing
 
 import django.core.checks
 from django import forms
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 from . import CheckId
@@ -102,6 +103,15 @@ class DictField(forms.ChoiceField):
 
 
 class ConfigForm(forms.Form):
+    include_apps = ListField(
+        forms.ChoiceField(
+            choices=[(a, a) for a in settings.INSTALLED_APPS],
+            error_messages={
+                "invalid_choice": _("'%(value)s' is not present in INSTALLED_APPS."),
+            },
+        ),
+        required=False,
+    )
     checks = ListField(
         UnionField(
             {
@@ -131,6 +141,15 @@ class ConfigForm(forms.Form):
             else:
                 result[check["id"]] = check
         return result
+
+    def clean(self) -> typing.Dict[str, typing.Any]:
+        if (
+            "include_apps" in self.cleaned_data
+            and not self.cleaned_data["include_apps"]
+            and "include_apps" not in self.data
+        ):
+            del self.cleaned_data["include_apps"]
+        return self.cleaned_data
 
     def is_valid(self, check_forms: typing.Dict[CheckId, "typing.Type[BaseCheckForm]"]) -> bool:  # type: ignore
         if not super().is_valid():
