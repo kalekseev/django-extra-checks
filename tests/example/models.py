@@ -30,12 +30,16 @@ class NestedField(models.Field):
 
 
 class ModelFieldVerboseName(models.Model):
-    first_arg_name = models.CharField("first arg name [test]")
-    kwarg_name = models.CharField(verbose_name="kwarg name [test]")
-    arg_gettext = models.CharField(_("arg name [test]"))
-    kwargs_gettext = models.CharField(verbose_name=_("kwarg name [test]"))
-    gettext_case = models.CharField(verbose_name=_("Kwarg Name [test]"))
-    gettext = models.CharField(verbose_name=gettext_lazy("kwarg name [test]"))
+    first_arg_name = models.CharField("first arg name [test]", max_length=32)
+    kwarg_name = models.CharField(verbose_name="kwarg name [test]", max_length=32)
+    arg_gettext = models.CharField(_("arg name [test]"), max_length=32)
+    kwargs_gettext = models.CharField(
+        verbose_name=_("kwarg name [test]"), max_length=32
+    )
+    gettext_case = models.CharField(verbose_name=_("Kwarg Name [test]"), max_length=32)
+    gettext = models.CharField(
+        verbose_name=gettext_lazy("kwarg name [test]"), max_length=32
+    )
     name_related = models.ForeignKey(
         Article,
         on_delete=models.CASCADE,
@@ -45,7 +49,7 @@ class ModelFieldVerboseName(models.Model):
     nested_field = NestedField(
         models.CharField(max_length=100), verbose_name="nested field [X050]"
     )
-    no_name = models.CharField()
+    no_name = models.CharField(max_length=32)
     no_name_related = models.ForeignKey(
         Article, on_delete=models.CASCADE, related_name="+"
     )
@@ -53,8 +57,8 @@ class ModelFieldVerboseName(models.Model):
 
 
 class ModelFieldFileUploadTo(models.Model):
-    image = models.ImageField(upload_to="/path/to/media")
-    file = models.FileField(upload_to="/path/to/files")
+    image = models.ImageField(upload_to="path/to/media")
+    file = models.FileField(upload_to="path/to/files")
     image_fail = models.ImageField()
     file_fail = models.FileField()
 
@@ -65,10 +69,10 @@ class CustomTextField(models.TextField):
 
 class ModelFieldTextNull(models.Model):
     text = models.TextField()
-    chars = models.CharField()
+    chars = models.CharField(max_length=32)
     custom = CustomTextField()
     text_fail = models.TextField(null=True)
-    chars_fail = models.CharField(null=True)
+    chars_fail = models.CharField(null=True, max_length=32)
     custom_fail = CustomTextField(null=True)
 
 
@@ -86,10 +90,10 @@ class ModelFieldForeignKeyIndex(models.Model):
     another_author = models.ForeignKey(
         Article, on_delete=models.CASCADE, related_name="+", db_index=True
     )
-    filed_one = models.ForeignKey(
+    field_one = models.ForeignKey(
         ModelFieldTextNull, on_delete=models.CASCADE, related_name="+", db_index=False
     )
-    filed_two = models.ForeignKey(
+    field_two = models.ForeignKey(
         ModelFieldNullFalse, on_delete=models.CASCADE, related_name="+", db_index=True
     )
 
