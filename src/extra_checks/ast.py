@@ -35,7 +35,10 @@ class ModelAST:
 
     @cached_property
     def _nodes(self) -> Iterator[ast.AST]:
-        source = textwrap.dedent(inspect.getsource(self.model_cls))
+        try:
+            source = textwrap.dedent(inspect.getsource(self.model_cls))
+        except TypeError:
+            return []
         return iter(ast.parse(source).body[0].body)  # type: ignore
 
     def _parse(self, predicate: Optional[Callable[[ast.AST], bool]] = None) -> None:
