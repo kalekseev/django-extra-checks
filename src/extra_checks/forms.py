@@ -2,7 +2,6 @@ import typing
 
 import django.core.checks
 from django import forms
-from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 from . import CheckId
@@ -103,15 +102,7 @@ class DictField(forms.ChoiceField):
 
 
 class ConfigForm(forms.Form):
-    include_apps = ListField(
-        forms.ChoiceField(
-            choices=[(a, a) for a in settings.INSTALLED_APPS],
-            error_messages={
-                "invalid_choice": _("'%(value)s' is not present in INSTALLED_APPS."),
-            },
-        ),
-        required=False,
-    )
+    include_apps = ListField(forms.CharField(), required=False)
     checks = ListField(
         UnionField(
             {
