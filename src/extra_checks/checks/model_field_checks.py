@@ -16,11 +16,7 @@ from .base_checks import BaseCheck, BaseCheckMixin
 class CheckModelField(BaseCheck):
     @abstractmethod
     def apply(
-        self,
-        field: models.fields.Field,
-        *,
-        field_ast: FieldAST,
-        model: Type[models.Model],
+        self, field: object, *, field_ast: FieldAST, model: Type[models.Model]
     ) -> Iterator[django.core.checks.CheckMessage]:
         raise NotImplementedError()
 
@@ -48,7 +44,7 @@ class CheckFieldVerboseName(CheckModelField):
     Id = CheckId.X050
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
+        self, field: object, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if not field_ast.verbose_name:
             yield self.message(
@@ -63,7 +59,7 @@ class CheckFieldVerboseNameGettext(GetTextMixin, CheckModelField):
     Id = CheckId.X051
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
+        self, field: object, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if field_ast.verbose_name and not self._is_gettext_node(field_ast.verbose_name):
             yield self.message(
@@ -78,7 +74,7 @@ class CheckFieldVerboseNameGettextCase(GetTextMixin, CheckModelField):
     Id = CheckId.X052
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
+        self, field: object, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if field_ast.verbose_name and self._is_gettext_node(field_ast.verbose_name):
             value = field_ast.verbose_name.args[0].s  # type: ignore
@@ -97,7 +93,7 @@ class CheckFieldHelpTextGettext(GetTextMixin, CheckModelField):
     Id = CheckId.X053
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
+        self, field: object, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if field_ast.help_text and not self._is_gettext_node(field_ast.help_text):
             yield self.message(
@@ -112,7 +108,7 @@ class CheckFieldFileUploadTo(CheckModelField):
     Id = CheckId.X054
 
     def apply(
-        self, field: models.fields.Field, **kwargs: Any
+        self, field: object, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, models.FileField):
             if not field.upload_to:
@@ -128,7 +124,7 @@ class CheckFieldTextNull(CheckModelField):
     Id = CheckId.X055
 
     def apply(
-        self, field: models.fields.Field, **kwargs: Any
+        self, field: object, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, (models.CharField, models.TextField)):
             if field.null:
@@ -145,7 +141,7 @@ class CheckFieldNullBoolean(CheckModelField):
     Id = CheckId.X056
 
     def apply(
-        self, field: models.fields.Field, **kwargs: Any
+        self, field: object, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, models.NullBooleanField):
             yield self.message(
@@ -160,14 +156,15 @@ class CheckFieldNullFalse(CheckModelField):
     Id = CheckId.X057
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
+        self, field: object, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if field.null is False and "null" in field_ast.kwargs:
-            yield self.message(
-                "Argument `null=False` is default.",
-                hint="Remove `null=False` from field arguments.",
-                obj=field,
-            )
+        if isinstance(field, models.fields.Field):
+            if field.null is False and "null" in field_ast.kwargs:
+                yield self.message(
+                    "Argument `null=False` is default.",
+                    hint="Remove `null=False` from field arguments.",
+                    obj=field,
+                )
 
 
 class CheckFieldForeignKeyIndexForm(BaseCheckForm):
@@ -187,22 +184,22 @@ class CheckFieldForeignKeyIndex(CheckModelField):
         super().__init__(**kwargs)
 
     def apply(
-        self,
-        field: models.fields.Field,
-        field_ast: FieldAST,
-        model: Type[models.Model],
+        self, field: object, field_ast: FieldAST, model: Type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if field.many_to_one and field_ast.kwargs.get("db_index") is None:  # type: ignore
-            if self.when == "unique_together":
-                if any(field.name in index for index in model._meta.unique_together):
+        if isinstance(field, models.fields.related.RelatedField):
+            if field.many_to_one and field_ast.kwargs.get("db_index") is None:
+                if self.when == "unique_together":
+                    if any(
+                        field.name in index for index in model._meta.unique_together
+                    ):
+                        yield self.message(
+                            "ForeignKey must set `db_index` explicitly if it present in unique_together.",
+                            hint="Specify `db_index` field argument.",
+                            obj=field,
+                        )
+                else:
                     yield self.message(
-                        "ForeignKey must set `db_index` explicitly if it present in unique_together.",
+                        "ForeignKey must set `db_index` explicitly.",
                         hint="Specify `db_index` field argument.",
                         obj=field,
                     )
-            else:
-                yield self.message(
-                    "ForeignKey must set `db_index` explicitly.",
-                    hint="Specify `db_index` field argument.",
-                    obj=field,
-                )
