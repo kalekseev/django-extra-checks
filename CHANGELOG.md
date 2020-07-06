@@ -2,7 +2,10 @@
 
 ### Unreleased
 
+### 0.3.0
+
 - Add `include_apps` option.
+- Fix ast crashes.
 
 ### 0.2.1
 
