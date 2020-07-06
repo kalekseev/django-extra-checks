@@ -117,12 +117,6 @@ def test_config_include_apps():
     assert form.is_valid({})
     assert form.cleaned_data == {"include_apps": [], "checks": {}}
 
-    form = ConfigForm(data={"include_apps": ["my_app"], "checks": []})
-    assert not form.is_valid({})
-    assert form.errors == {
-        "include_apps": ["'my_app' is not present in INSTALLED_APPS."]
-    }
-
     form = ConfigForm(data={"include_apps": ["tests.example"], "checks": []})
     assert form.is_valid({})
     assert form.cleaned_data == {"include_apps": ["tests.example"], "checks": {}}
