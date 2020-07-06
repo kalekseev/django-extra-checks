@@ -8,8 +8,8 @@ from django.db import models
 
 from .. import CheckId
 from ..ast import FieldAST
-from ..controller import registry
 from ..forms import BaseCheckForm
+from ..registry import registry
 from .base_checks import BaseCheck, BaseCheckMixin
 
 

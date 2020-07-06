@@ -9,8 +9,8 @@ from django.db.models.options import DEFAULT_NAMES as META_ATTRS
 
 from .. import CheckId
 from ..ast import FieldAST, ModelAST
-from ..controller import ChecksConfig, registry
 from ..forms import BaseCheckForm, ListField
+from ..registry import ChecksConfig, registry
 from .base_checks import BaseCheck
 
 if TYPE_CHECKING:

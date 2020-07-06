@@ -7,7 +7,7 @@ from extra_checks.checks.model_field_checks import (
     CheckFieldForeignKeyIndex,
 )
 from extra_checks.checks.self_checks import CheckConfig, check_extra_checks_health
-from extra_checks.controller import Registry
+from extra_checks.registry import Registry
 
 
 def test_empty_config(registry, settings):

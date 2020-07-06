@@ -1,7 +1,7 @@
 import pytest
 
 from extra_checks.checks.self_checks import CheckConfig
-from extra_checks.controller import Registry
+from extra_checks.registry import Registry
 
 
 @pytest.fixture

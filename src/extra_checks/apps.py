@@ -7,6 +7,6 @@ class ExtraChecksConfig(AppConfig):
     def ready(self) -> None:
         super(ExtraChecksConfig, self).ready()
         from . import checks  # noqa
-        from .controller import registry
+        from .registry import registry
 
         registry.bind()

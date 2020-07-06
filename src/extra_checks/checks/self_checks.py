@@ -3,7 +3,7 @@ from typing import Any, Iterable, Iterator, List, Optional
 import django.core.checks
 
 from .. import CheckId
-from ..controller import ChecksConfig, registry
+from ..registry import ChecksConfig, registry
 from .base_checks import BaseCheck
 
 
