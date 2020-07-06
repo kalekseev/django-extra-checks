@@ -6,7 +6,6 @@ from extra_checks.checks import (
     CheckModelAttribute,
     CheckModelMetaAttribute,
 )
-from extra_checks.controller import ChecksController
 from extra_checks.forms import ConfigForm
 
 
@@ -120,19 +119,6 @@ def test_config_include_apps():
     form = ConfigForm(data={"include_apps": ["tests.example"], "checks": []})
     assert form.is_valid({})
     assert form.cleaned_data == {"include_apps": ["tests.example"], "checks": {}}
-
-
-def test_controller(settings):
-    controller = ChecksController.create(checks={CheckFieldFileUploadTo: ["tag"]})
-    assert controller.is_healthy
-
-    settings.EXTRA_CHECKS = {"checks": [CheckFieldFileUploadTo.Id.value]}
-    controller = ChecksController.create(checks={CheckFieldFileUploadTo: ["tag"]})
-    assert not controller.errors
-    assert controller.is_healthy
-    assert len(controller.registered_checks["tag"]) == 1
-    check = controller.registered_checks["tag"][0]
-    assert isinstance(check, CheckFieldFileUploadTo)
 
 
 def test_ignore_checks(monkeypatch):

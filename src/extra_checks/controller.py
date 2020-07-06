@@ -1,4 +1,3 @@
-import site
 from functools import partial
 from typing import (
     TYPE_CHECKING,
@@ -18,150 +17,99 @@ import django.apps
 import django.core.checks
 from django import forms
 from django.conf import settings
-from django.db import models
 
 from . import _IGNORED, CheckId
-from .ast import FieldAST, ModelAST
 from .forms import ConfigForm
 
 if TYPE_CHECKING:
     from .checks import BaseCheck
 
 
-DEFAULT_CONFIG: dict = {
-    "checks": [],
-}
+class ChecksConfig:
+    def __init__(
+        self,
+        *,
+        errors: Optional[forms.utils.ErrorDict] = None,
+        checks: Optional[Dict[CheckId, dict]] = None,
+        include_apps: Optional[Iterable[str]] = None,
+    ) -> None:
+        self.checks: Dict[CheckId, dict] = {**(checks or {}), CheckId.X001: {}}
+        self.include_apps = include_apps
+        self.errors = errors
+
+    @classmethod
+    def create(cls, checks: Dict["Type[BaseCheck]", Sequence[str]]) -> "ChecksConfig":
+        check_forms = {r.Id: r.settings_form_class for r in checks}
+        if not hasattr(settings, "EXTRA_CHECKS"):
+            return cls()
+        form = ConfigForm(settings.EXTRA_CHECKS)
+        if not form.is_valid(check_forms):
+            return cls(errors=form.errors)
+        return cls(**form.cleaned_data)
+
+
+_ChecksHandler = Callable[[Optional[List[Any]], Any], Iterator[Any]]
 
 
 class Registry:
     def __init__(self) -> None:
-        self.checks: Dict["Type[BaseCheck]", Sequence[str]] = {}
+        self.registered_checks: Dict["Type[BaseCheck]", Sequence[str]] = {}
+        self.enabled_checks: Dict[str, List["BaseCheck"]] = {}
+        self.handlers: Dict[str, _ChecksHandler] = {}
+        self.is_healthy = True
 
     def _register(
         self, tags: List[str], check_class: "Type[BaseCheck]"
     ) -> "Type[BaseCheck]":
-        self.checks[check_class] = tags
+        self.registered_checks[check_class] = tags
         return check_class
+
+    def _add_handler(self, tag: str, handler: _ChecksHandler) -> _ChecksHandler:
+        self.handlers[tag] = handler
+        return handler
+
+    def _bind_handler(
+        self,
+        tag: str,
+        handler: _ChecksHandler,
+        checks: List["BaseCheck"],
+        config: ChecksConfig,
+    ) -> Optional[Callable]:
+        if checks:
+            f = partial(handler, checks, config)
+            django.core.checks.register(f, tag)
+            return f
+        return None
 
     def register(self, *tags: str) -> Callable[["Type[BaseCheck]"], "Type[BaseCheck]"]:
         return partial(self._register, tags)
 
-    def finish(self) -> "ChecksController":
-        controller = ChecksController.create(self.checks)
+    def add_handler(self, tag: str) -> Callable[[Callable], Callable]:
+        return partial(self._add_handler, tag)
 
-        def f(callback: Callable) -> Callable:
-            """
-            Django does `check.tags = ...`, callback is a method of the controller
-            and setattr will fail on it so we wrap method with a function.
-            """
-
-            def inner(*args: Any, **kwargs: Any) -> Any:
-                return callback(*args, **kwargs)
-
-            return inner
-
-        django.core.checks.register(
-            f(controller.check_extra_checks_health), "extra_checks_selfcheck"
-        )
-        django.core.checks.register(
-            f(controller.check_models), django.core.checks.Tags.models
-        )
-
-        return controller
-
-
-class ChecksController:
-    def __init__(
-        self,
-        checks: Dict["Type[BaseCheck]", Sequence[str]],
-        config: Optional[Dict[CheckId, dict]] = None,
-        errors: Optional[forms.utils.ErrorDict] = None,
-        include_apps: Optional[Iterable[str]] = None,
-    ) -> None:
-        checks = checks or {}
-        config = config or {CheckId.X001: {}}
-        self.errors = errors
-        self.include_apps = include_apps
-        self.registered_checks: Dict[str, List["BaseCheck"]] = {}
-        self.ignored: Dict[Union[CheckId, str], set] = {}
+    def bind(self) -> Dict[str, Callable]:
+        ignored: Dict[Union[CheckId, str], set] = {}
         for obj, ids in _IGNORED.items():
             for id_ in ids:
-                self.ignored.setdefault(id_, set()).add(obj)
-        for check_class, tags in checks.items():
-            if check_class.Id in config:
+                ignored.setdefault(id_, set()).add(obj)
+        config = ChecksConfig.create(self.registered_checks)
+        for check_class, tags in self.registered_checks.items():
+            if check_class.Id in config.checks:
                 check = check_class(
-                    ignored_objects=self.ignored.get(check_class.Id, set()),
-                    **config[check_class.Id],
+                    ignored_objects=ignored.get(check_class.Id, set()),
+                    **config.checks[check_class.Id],
                 )
                 for tag in tags:
-                    self.registered_checks.setdefault(tag, []).append(check)
-
-    @classmethod
-    def create(
-        cls, checks: Dict["Type[BaseCheck]", Sequence[str]]
-    ) -> "ChecksController":
-        check_form = {r.Id: r.settings_form_class for r in checks}
-        if not hasattr(settings, "EXTRA_CHECKS"):
-            return cls(checks=checks)
-        form = ConfigForm(settings.EXTRA_CHECKS)
-        if form.is_valid(check_form):
-            return cls(
-                checks=checks,
-                config=form.cleaned_data["checks"],
-                include_apps=form.cleaned_data.get("include_apps"),
+                    self.enabled_checks.setdefault(tag, []).append(check)
+        tag_handlers = {}
+        for tag, handler in self.handlers.items():
+            bh = self._bind_handler(
+                tag, handler, self.enabled_checks.get(tag, []), config
             )
-        return cls(checks=checks, errors=form.errors)
-
-    @property
-    def is_healthy(self) -> bool:
-        return not self.errors
-
-    def check_extra_checks_health(
-        self, app_configs: Optional[List[Any]] = None, **kwargs: Any
-    ) -> Iterator[django.core.checks.CheckMessage]:
-        for check in self.registered_checks.get("extra_checks_selfcheck", []):
-            yield from check(self)
-
-    def _get_models_to_check(
-        self, app_configs: Optional[List[Any]]
-    ) -> Iterator[Type[models.Model]]:
-        apps = (
-            django.apps.apps.get_app_configs() if app_configs is None else app_configs
-        )
-        site_prefixes = set(site.PREFIXES)
-        if self.include_apps is not None:
-            for app in apps:
-                if app.name in self.include_apps:
-                    yield from app.get_models()
-            return
-        for app in apps:
-            if not any(app.path.startswith(path) for path in site_prefixes):
-                yield from app.get_models()
-
-    def check_models(
-        self, app_configs: Optional[List[Any]] = None, **kwargs: Any
-    ) -> Iterator[Any]:
-        from .checks import CheckModelField
-
-        model_checks = []
-        field_checks = []
-        for check in self.registered_checks.get(django.core.checks.Tags.models, []):
-            if isinstance(check, CheckModelField):
-                field_checks.append(check)
-            else:
-                model_checks.append(check)
-        if not model_checks and not field_checks:
-            return
-        for model in self._get_models_to_check(app_configs):
-            model_ast = ModelAST(model)
-            for check in model_checks:
-                yield from check(model, model_ast=model_ast)
-            if field_checks:
-                for field, node in model_ast.field_nodes:
-                    field_ast = FieldAST(node)
-                    for check in field_checks:
-                        yield from check(field, field_ast=field_ast, model=model)
+            if bh:
+                tag_handlers[tag] = bh
+        self.is_healthy = not config.errors
+        return tag_handlers
 
 
 registry = Registry()
-register = registry.register

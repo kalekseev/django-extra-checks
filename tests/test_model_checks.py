@@ -1,45 +1,69 @@
-import django.core.checks
+import pytest
 
 from extra_checks.checks import model_checks
 from tests.example.models import Article, Author
 
 
-def test_check_model_attrs(settings, use_models, registry):
-    use_models(Article)
-    settings.EXTRA_CHECKS = {
-        "checks": [{"id": model_checks.CheckModelAttribute.Id.value, "attrs": ["site"]}]
-    }
-    registry._register(
-        [django.core.checks.Tags.models], model_checks.CheckModelAttribute
+@pytest.fixture
+def test_case(test_case):
+    return test_case.handler(model_checks.check_models)
+
+
+def test_get_models_to_check():
+    models = list(model_checks._get_models_to_check())
+    assert models
+    for model in models:
+        assert model._meta.app_label == "example"
+
+
+def test_get_models_to_check_include_apps():
+    models = list(model_checks._get_models_to_check(include_apps=[]))
+    assert not models
+
+    models = list(
+        model_checks._get_models_to_check(include_apps=["django.contrib.sites"])
     )
-    controller = registry.finish()
-    assert controller.is_healthy
-    messages = list(controller.check_models())
+    assert models
+    for model in models:
+        assert model._meta.app_label == "sites"
+
+
+def test_check_model_attrs(test_case):
+    messages = (
+        test_case.models(Article)
+        .settings(
+            {
+                "checks": [
+                    {"id": model_checks.CheckModelAttribute.Id.value, "attrs": ["site"]}
+                ]
+            }
+        )
+        .check(model_checks.CheckModelAttribute)
+        .run()
+    )
     assert not messages
-    use_models(Author)
-    messages = list(controller.check_models())
+    messages = test_case.models(Author).run()
     assert len(messages) == 1
     assert messages[0].id == model_checks.CheckModelAttribute.Id.name
 
 
-def test_check_model_meta_attrs(settings, use_models, registry):
-    use_models(Article)
-    settings.EXTRA_CHECKS = {
-        "checks": [
+def test_check_model_meta_attrs(test_case):
+    messages = (
+        test_case.models(Article)
+        .settings(
             {
-                "id": model_checks.CheckModelMetaAttribute.Id.value,
-                "attrs": ["verbose_name"],
+                "checks": [
+                    {
+                        "id": model_checks.CheckModelMetaAttribute.Id.value,
+                        "attrs": ["verbose_name"],
+                    }
+                ]
             }
-        ]
-    }
-    registry._register(
-        [django.core.checks.Tags.models], model_checks.CheckModelMetaAttribute
+        )
+        .check(model_checks.CheckModelMetaAttribute)
+        .run()
     )
-    controller = registry.finish()
-    assert controller.is_healthy
-    messages = list(controller.check_models())
     assert not messages
-    use_models(Author)
-    messages = list(controller.check_models())
+    messages = test_case.models(Author).run()
     assert len(messages) == 1
     assert messages[0].id == model_checks.CheckModelMetaAttribute.Id.name

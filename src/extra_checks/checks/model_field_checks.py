@@ -8,7 +8,7 @@ from django.db import models
 
 from .. import CheckId
 from ..ast import FieldAST
-from ..controller import register
+from ..controller import registry
 from ..forms import BaseCheckForm
 from .base_checks import BaseCheck, BaseCheckMixin
 
@@ -39,7 +39,7 @@ class GetTextMixin(BaseCheckMixin):
         )
 
 
-@register(django.core.checks.Tags.models)
+@registry.register(django.core.checks.Tags.models)
 class CheckFieldVerboseName(CheckModelField):
     Id = CheckId.X050
 
@@ -54,7 +54,7 @@ class CheckFieldVerboseName(CheckModelField):
             )
 
 
-@register(django.core.checks.Tags.models)
+@registry.register(django.core.checks.Tags.models)
 class CheckFieldVerboseNameGettext(GetTextMixin, CheckModelField):
     Id = CheckId.X051
 
@@ -69,7 +69,7 @@ class CheckFieldVerboseNameGettext(GetTextMixin, CheckModelField):
             )
 
 
-@register(django.core.checks.Tags.models)
+@registry.register(django.core.checks.Tags.models)
 class CheckFieldVerboseNameGettextCase(GetTextMixin, CheckModelField):
     Id = CheckId.X052
 
@@ -88,7 +88,7 @@ class CheckFieldVerboseNameGettextCase(GetTextMixin, CheckModelField):
                 )
 
 
-@register(django.core.checks.Tags.models)
+@registry.register(django.core.checks.Tags.models)
 class CheckFieldHelpTextGettext(GetTextMixin, CheckModelField):
     Id = CheckId.X053
 
@@ -103,7 +103,7 @@ class CheckFieldHelpTextGettext(GetTextMixin, CheckModelField):
             )
 
 
-@register(django.core.checks.Tags.models)
+@registry.register(django.core.checks.Tags.models)
 class CheckFieldFileUploadTo(CheckModelField):
     Id = CheckId.X054
 
@@ -119,7 +119,7 @@ class CheckFieldFileUploadTo(CheckModelField):
                 )
 
 
-@register(django.core.checks.Tags.models)
+@registry.register(django.core.checks.Tags.models)
 class CheckFieldTextNull(CheckModelField):
     Id = CheckId.X055
 
@@ -136,7 +136,7 @@ class CheckFieldTextNull(CheckModelField):
                 )
 
 
-@register(django.core.checks.Tags.models)
+@registry.register(django.core.checks.Tags.models)
 class CheckFieldNullBoolean(CheckModelField):
     Id = CheckId.X056
 
@@ -151,7 +151,7 @@ class CheckFieldNullBoolean(CheckModelField):
             )
 
 
-@register(django.core.checks.Tags.models)
+@registry.register(django.core.checks.Tags.models)
 class CheckFieldNullFalse(CheckModelField):
     Id = CheckId.X057
 
@@ -174,7 +174,7 @@ class CheckFieldForeignKeyIndexForm(BaseCheckForm):
     )
 
 
-@register(django.core.checks.Tags.models)
+@registry.register(django.core.checks.Tags.models)
 class CheckFieldForeignKeyIndex(CheckModelField):
     Id = CheckId.X058
     settings_form_class = CheckFieldForeignKeyIndexForm

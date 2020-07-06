@@ -1,10 +1,21 @@
-from typing import Any, Iterator
+from typing import Any, Iterable, Iterator, List, Optional
 
 import django.core.checks
 
 from .. import CheckId
-from ..controller import ChecksController, register
+from ..controller import ChecksConfig, registry
 from .base_checks import BaseCheck
+
+
+@registry.add_handler("extra_checks_selfcheck")
+def check_extra_checks_health(
+    checks: Iterable["CheckConfig"],
+    config: ChecksConfig,
+    app_configs: Optional[List[Any]] = None,
+    **kwargs: Any,
+) -> Iterator[django.core.checks.CheckMessage]:
+    for check in checks:
+        yield from check(config)
 
 
 def dict_to_text(data: dict, indent_level: int = 0) -> str:
@@ -22,15 +33,15 @@ def dict_to_text(data: dict, indent_level: int = 0) -> str:
     return "\n".join(output)
 
 
-@register("extra_checks_selfcheck")
+@registry.register("extra_checks_selfcheck")
 class CheckConfig(BaseCheck):
     Id = CheckId.X001
     level = django.core.checks.CRITICAL
 
     def apply(
-        self, obj: ChecksController, **kwargs: Any
+        self, obj: ChecksConfig, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if not obj.is_healthy:
+        if obj.errors:
             yield self.message(
                 "Invalid EXTRA_CHECKS config.",
                 hint="Fix EXTRA_CHECKS in your settings. Errors:\n"

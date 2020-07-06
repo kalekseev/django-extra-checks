@@ -6,22 +6,24 @@ from extra_checks.checks.model_field_checks import (
     CheckFieldFileUploadTo,
     CheckFieldForeignKeyIndex,
 )
-from extra_checks.checks.self_checks import CheckConfig
+from extra_checks.checks.self_checks import CheckConfig, check_extra_checks_health
 from extra_checks.controller import Registry
 
 
 def test_empty_config(registry, settings):
     settings.EXTRA_CHECKS = {}
-    controller = registry.finish()
-    assert controller.is_healthy
-    assert len(controller.registered_checks) == 1
+    registry.bind()
+    assert registry.is_healthy
+    assert len(registry.registered_checks) == 1
+    assert len(registry.enabled_checks) == 1
 
     settings.EXTRA_CHECKS = {"checks": []}
     registry = Registry()
     registry._register(["extra_checks_selfcheck"], CheckConfig)
-    controller = registry.finish()
-    assert controller.is_healthy
-    assert len(controller.registered_checks) == 1
+    registry.bind()
+    assert registry.is_healthy
+    assert len(registry.registered_checks) == 1
+    assert len(registry.enabled_checks) == 1
 
 
 def test_error_formatting(registry, settings):
@@ -33,9 +35,10 @@ def test_error_formatting(registry, settings):
     }
     registry._register([django.core.checks.Tags.models], CheckFieldForeignKeyIndex)
     registry._register([django.core.checks.Tags.models], CheckFieldFileUploadTo)
-    controller = registry.finish()
-    assert not controller.is_healthy
-    messages = list(controller.check_extra_checks_health())
+    registry._add_handler("extra_checks_selfcheck", check_extra_checks_health)
+    handlers = registry.bind()
+    assert not registry.is_healthy
+    messages = list(handlers["extra_checks_selfcheck"]())
     assert len(messages) == 1
     assert (
         messages[0].hint

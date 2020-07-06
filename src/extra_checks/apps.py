@@ -9,4 +9,4 @@ class ExtraChecksConfig(AppConfig):
         from . import checks  # noqa
         from .controller import registry
 
-        registry.finish()
+        registry.bind()
