@@ -6,7 +6,7 @@ from .models import Article, Author
 class ArticleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
-        read_only_fields = []
+        read_only_fields: list = []
 
 
 class AuthorSerializer(serializers.ModelSerializer):
