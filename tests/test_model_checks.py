@@ -1,7 +1,7 @@
 import pytest
 
 from extra_checks.checks import model_checks
-from tests.example.models import Article, Author
+from tests.example.models import Article, Author, ModelFieldTextNull
 
 
 @pytest.fixture
@@ -67,3 +67,16 @@ def test_check_model_meta_attrs(test_case):
     messages = test_case.models(Author).run()
     assert len(messages) == 1
     assert messages[0].id == model_checks.CheckModelMetaAttribute.Id.name
+
+
+def test_admin_models(test_case):
+    messages = (
+        test_case.models(Article, Author)
+        .settings({"checks": [model_checks.CheckModelAdmin.Id.value]})
+        .check(model_checks.CheckModelAdmin)
+        .run()
+    )
+    assert not messages
+    messages = test_case.models(ModelFieldTextNull).run()
+    assert len(messages) == 1
+    assert messages[0].id == model_checks.CheckModelAdmin.Id.name

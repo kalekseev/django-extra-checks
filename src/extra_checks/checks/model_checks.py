@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Any, Iterable, Iterator, List, Optional, Type,
 
 import django.core.checks
 from django import forms
+from django.apps import apps
+from django.contrib.admin.sites import all_sites
 from django.db import models
 from django.db.models.options import DEFAULT_NAMES as META_ATTRS
 
@@ -62,10 +64,6 @@ def check_models(
                     yield from check(field, field_ast=field_ast, model=model)
 
 
-class MetaAttrsForm(BaseCheckForm):
-    attrs = forms.MultipleChoiceField(choices=[(o, o) for o in META_ATTRS])
-
-
 class CheckModel(BaseCheck):
     @abstractmethod
     def apply(
@@ -102,6 +100,10 @@ class CheckModelAttribute(CheckModel):
 @registry.register(django.core.checks.Tags.models)
 class CheckModelMetaAttribute(CheckModel):
     Id = CheckId.X011
+
+    class MetaAttrsForm(BaseCheckForm):
+        attrs = forms.MultipleChoiceField(choices=[(o, o) for o in META_ATTRS])
+
     settings_form_class = MetaAttrsForm
 
     def __init__(self, attrs: List[str], **kwargs: Any) -> None:
@@ -122,3 +124,33 @@ class CheckModelMetaAttribute(CheckModel):
                     hint=f'Set "{attr}" attribute in Meta.',
                     obj=model,
                 )
+
+
+@registry.register(django.core.checks.Tags.models)
+class CheckModelAdmin(CheckModel):
+    Id = CheckId.X012
+
+    class AdminForm(BaseCheckForm):
+        def clean(self) -> dict:
+            if not apps.is_installed("django.contrib.admin"):
+                raise forms.ValidationError(
+                    "django.contrib.admin must be in INSTALLED_APPS."
+                )
+            return super().clean()
+
+    settings_form_class = AdminForm
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.models_with_admin = set()
+        for admin_site in all_sites:
+            for model_cls, admin_cls in admin_site._registry.items():
+                self.models_with_admin.add(model_cls)
+                for inline in admin_cls.inlines:
+                    self.models_with_admin.add(inline.model)
+
+    def apply(
+        self, model: Type[models.Model], model_ast: ModelAST
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        if model not in self.models_with_admin:
+            yield self.message("The model is not registered in admin.", obj=model)

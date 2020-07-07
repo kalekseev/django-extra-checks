@@ -21,11 +21,10 @@ class CheckModelField(BaseCheck):
         raise NotImplementedError()
 
 
-class GettTextFuncForm(BaseCheckForm):
-    gettext_func = forms.CharField(required=False)
-
-
 class GetTextMixin(BaseCheckMixin):
+    class GettTextFuncForm(BaseCheckForm):
+        gettext_func = forms.CharField(required=False)
+
     settings_form_class = GettTextFuncForm
 
     def __init__(self, gettext_func: str, **kwargs: Any) -> None:
@@ -167,16 +166,16 @@ class CheckFieldNullFalse(CheckModelField):
                 )
 
 
-class CheckFieldForeignKeyIndexForm(BaseCheckForm):
-    when = forms.ChoiceField(
-        choices=[("unique_together", "unique_together"), ("always", "always")],
-        required=False,
-    )
-
-
 @registry.register(django.core.checks.Tags.models)
 class CheckFieldForeignKeyIndex(CheckModelField):
     Id = CheckId.X058
+
+    class CheckFieldForeignKeyIndexForm(BaseCheckForm):
+        when = forms.ChoiceField(
+            choices=[("unique_together", "unique_together"), ("always", "always")],
+            required=False,
+        )
+
     settings_form_class = CheckFieldForeignKeyIndexForm
 
     def __init__(self, when: str, **kwargs: Any) -> None:

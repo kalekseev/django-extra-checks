@@ -5,20 +5,23 @@ from django.utils.translation import gettext_lazy
 _ = gettext_lazy
 
 
-class Article(models.Model):
-    site = models.ForeignKey(Site, verbose_name="site", on_delete=models.CASCADE)
-    title = models.CharField("article title", max_length=100)
-    text = models.TextField(verbose_name="article text")
-
-    class Meta:
-        verbose_name = "Site Article"
-
-
 if True:
     # test that indentation doesn't break ast parser
     class Author(models.Model):
         first_name = models.CharField(max_length=100)
         last_name = models.CharField(max_length=100)
+
+
+class Article(models.Model):
+    site = models.ForeignKey(Site, verbose_name="site", on_delete=models.CASCADE)
+    title = models.CharField("article title", max_length=100)
+    text = models.TextField(verbose_name="article text")
+    author = models.ForeignKey(
+        Author, related_name="articles", on_delete=models.CASCADE
+    )
+
+    class Meta:
+        verbose_name = "Site Article"
 
 
 class NestedField(models.Field):

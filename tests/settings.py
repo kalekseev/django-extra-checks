@@ -2,7 +2,16 @@ SECRET_KEY = "random"
 
 ALLOWED_HOSTS = ["*"]
 
-INSTALLED_APPS = ["django.contrib.sites", "tests.example", "extra_checks"]
+INSTALLED_APPS = [
+    "django.contrib.sites",
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.messages",
+    "django.contrib.sessions",
+    "tests.example",
+    "extra_checks",
+]
 
 DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3"}}
 

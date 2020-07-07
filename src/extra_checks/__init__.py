@@ -6,6 +6,7 @@ class CheckId(str, enum.Enum):
     X001 = "extra-checks-config"
     X010 = "model-attribute"
     X011 = "model-meta-attribute"
+    X012 = "model-admin"
     X050 = "field-verbose-name"
     X051 = "field-verbose-name-gettext"
     X052 = "field-verbose-name-gettext-case"

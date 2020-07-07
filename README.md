@@ -49,6 +49,7 @@ class MyModel(models.Model):
 - **extra-checks-config** - settings.EXTRA_CHECKS is valid config for django-extra-checks (always enabled).
 - **model-attribute** - Each Model in the project must have all attributes from `attrs` setting specified.
 - **model-meta-attribute** - Each Model.Meta in the project must have all attributes from `attrs` setting specified.
+- **model-admin** - Each model must be registered in admin.
 - **field-file-upload-to** - FileField/ImageField must have non empty `upload_to` argument.
 - **field-verbose-name** - All model's fields must have verbose name.
 - **field-verbose-name-gettext** - verbose_name must use gettext.
