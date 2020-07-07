@@ -24,10 +24,11 @@ from .base_checks import BaseCheck
 
 
 def _collect_serializers(
-    ss: Iterable[Type[Serializer]], visited: Optional[Set[Type[Serializer]]] = None,
+    serializers: Iterable[Type[Serializer]],
+    visited: Optional[Set[Type[Serializer]]] = None,
 ) -> Iterator[Type[Serializer]]:
     visited = visited or set()
-    for serializer in ss:
+    for serializer in serializers:
         if serializer not in visited:
             visited.add(serializer)
             yield from _collect_serializers(serializer.__subclasses__(), visited)
@@ -35,19 +36,20 @@ def _collect_serializers(
 
 
 def _filter_app_serializers(
-    ss: Iterable[Type[Serializer]], include_apps: Optional[Iterable[str]] = None,
+    serializers: Iterable[Type[Serializer]],
+    include_apps: Optional[Iterable[str]] = None,
 ) -> Iterator[Type[Serializer]]:
     site_prefixes = set(site.PREFIXES)
     if include_apps is not None:
         app_paths = {
             a.path for a in django.apps.apps.get_app_configs() if a.name in include_apps
         }
-        for s in ss:
+        for s in serializers:
             module = importlib.import_module(s.__module__)
             if any(module.__file__.startswith(path) for path in app_paths):
                 yield s
         return
-    for s in ss:
+    for s in serializers:
         module = importlib.import_module(s.__module__)
         if not any(module.__file__.startswith(path) for path in site_prefixes):
             yield s

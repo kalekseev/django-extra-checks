@@ -1,4 +1,5 @@
 import pytest
+import rest_framework.serializers
 
 from extra_checks.checks.self_checks import CheckConfig
 from extra_checks.registry import Registry
@@ -23,13 +24,6 @@ class TestCase:
         self._settings.EXTRA_CHECKS = settings
         return self
 
-    def models(self, *models):
-        self._monkeypatch.setattr(
-            "extra_checks.checks.model_checks._get_models_to_check",
-            lambda *a, **kw: (m for m in models),
-        )
-        return self
-
     def check(self, check):
         self._registry._register([self.TEST_TAG], check)
         return self
@@ -43,6 +37,26 @@ class TestCase:
         self._registry.enabled_checks = {}
         handlers = self._registry.bind()
         return list(handlers[self.TEST_TAG]())
+
+    def models(self, *models):
+        self._monkeypatch.setattr(
+            "extra_checks.checks.model_checks._get_models_to_check",
+            lambda *a, **kw: (m for m in models),
+        )
+        return self
+
+    def serializers(self, *serializers):
+        n, m = [], []
+        for s in serializers:
+            if issubclass(s, rest_framework.serializers.ModelSerializer):
+                m.append(s)
+            else:
+                n.append(s)
+        self._monkeypatch.setattr(
+            "extra_checks.checks.drf_serializer_checks._get_serializers_to_check",
+            lambda *a, **kw: (n, m),
+        )
+        return self
 
 
 @pytest.fixture
