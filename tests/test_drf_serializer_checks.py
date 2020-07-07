@@ -1,7 +1,10 @@
 import pytest
-import rest_framework.authtoken.serializers  # import AuthTokenSerializer into the project
-import rest_framework.serializers
 
+try:
+    import rest_framework.authtoken.serializers  # import AuthTokenSerializer into the project
+    import rest_framework.serializers
+except ImportError:
+    pytest.skip("skipping rest_framework tests", allow_module_level=True)
 from extra_checks.checks.drf_serializer_checks import (
     CheckDRFSerializerExtraKwargs,
     CheckDRFSerializerMetaAttribute,

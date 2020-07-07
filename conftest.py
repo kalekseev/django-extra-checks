@@ -1,5 +1,4 @@
 import pytest
-import rest_framework.serializers
 
 from extra_checks.checks.self_checks import CheckConfig
 from extra_checks.registry import Registry
@@ -46,6 +45,8 @@ class TestCase:
         return self
 
     def serializers(self, *serializers):
+        import rest_framework.serializers
+
         n, m = [], []
         for s in serializers:
             if issubclass(s, rest_framework.serializers.ModelSerializer):
