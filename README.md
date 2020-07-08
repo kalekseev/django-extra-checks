@@ -4,8 +4,7 @@ Useful checks for Django Checks Frameworks
 
 ## Settings
 
-To enable some check define `EXTRA_CHECKS` setting with a dict of
-checks and its settings, eg:
+To enable some check define `EXTRA_CHECKS` setting with a dict of checks and its settings:
 
 ```python
 EXTRA_CHECKS = {
@@ -32,7 +31,9 @@ EXTRA_CHECKS = {
 }
 ```
 
-To ignore model warnings you can use `ignore_checks` decorator, eg:
+#### Ignoring check problems
+
+To ignore all warnings on some object you can use `ignore_checks` decorator:
 
 ```python
 from extra_checks import ignore_checks, CheckID
@@ -40,6 +41,20 @@ from extra_checks import ignore_checks, CheckID
 @ignore_checks("model-attribute", "X011", CheckID.X050)
 class MyModel(models.Model):
     image = models.ImageField()
+```
+
+Another way is to specify type of the object that need to be ignored in `ignore_types` option:
+
+```python
+EXTRA_CHECKS = {
+    "check": [
+        {
+            "id": "field-verbose-name-gettext",
+            # make this check skip wagtail's StreamField
+            "ignore_types": ["wagtail.core.fields.StreamField"],
+        }
+    ]
+}
 ```
 
 ## Checks
