@@ -57,7 +57,7 @@ class MyModel(models.Model):
 - **field-help-text-gettext** - help_text must use gettext.
 - **field-text-null** - text fields shoudn't use `null=True`.
 - **field-boolean-null** - prefer using `BooleanField(null=True)` instead of `NullBooleanField`.
-- **field-null-false** - don't pass `null=False` to model fields (this is django default).
+- **field-null** - don't pass `null=False` to model fields (this is django default).
 - **field-foreign-key-index** - ForeignKey fields must specify `db_index` explicitly (to apply to unique together only: `when: unique_together`).
 
 ### DRF Serializers
