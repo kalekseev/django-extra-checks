@@ -80,7 +80,7 @@ class CheckFieldVerboseNameGettextCase(GetTextMixin, CheckModelField):
             if not all(
                 w.islower() or w.isupper() or w.isdigit() for w in value.split(" ")
             ):
-                yield django.core.checks.Warning(
+                yield self.message(
                     "Words in verbose name must be all upper case or all lower case.",
                     hint='Change verbose name to "{}".'.format(value.lower()),
                     obj=field,

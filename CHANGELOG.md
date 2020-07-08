@@ -2,6 +2,10 @@
 
 ### Unreleased
 
+### 0.4.1
+
+- Fix message for *field-verbose-name-gettext-case*
+
 ### 0.4.0
 
 - Add infra for rest framework serializers checks

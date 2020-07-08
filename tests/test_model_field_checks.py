@@ -61,6 +61,7 @@ def test_check_field_verbose_name_gettext_case(test_case):
     assert {m.obj.name for m in messages} == {
         "gettext_case",
     }
+    assert messages[0].id == model_field_checks.CheckFieldVerboseNameGettextCase.Id.name
 
 
 def test_check_field_file_upload_to(test_case):
