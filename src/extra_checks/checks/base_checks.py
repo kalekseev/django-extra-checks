@@ -23,7 +23,7 @@ class BaseCheck(ABC):
         self,
         level: Optional[int] = None,
         ignore_objects: Optional[Set[Any]] = None,
-        ignore_types: Optional[Set[str]] = None,
+        ignore_types: Optional[set] = None,
     ) -> None:
         self.level = level or self.level
         self.ignore_objects = ignore_objects or set()

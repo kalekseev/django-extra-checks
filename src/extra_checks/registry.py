@@ -151,8 +151,8 @@ class Registry:
         return tag_handlers
 
     @property
-    def is_healthy(self):
-        return not self._config.errors
+    def is_healthy(self) -> bool:
+        return True if self._config is None else not self._config.errors
 
     def ignore_checks(self, *args: Union[CheckId, str]) -> Callable[[Any], Any]:
         def f(entity: Any) -> Any:

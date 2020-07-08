@@ -177,11 +177,11 @@ class BaseCheckForm(forms.Form):
         value = self.cleaned_data["ignore_types"]
         if not value:
             return value
-        result = []
+        result = set()
         for import_path in value:
             try:
                 path, entry = import_path.rsplit(".", 1)
-                result.append(getattr(importlib.import_module(path), entry))
+                result.add(getattr(importlib.import_module(path), entry))
             except (ImportError, ValueError, AttributeError):
                 raise forms.ValidationError(
                     f"ignore_types contains entry that can't be imported: '{import_path}'."

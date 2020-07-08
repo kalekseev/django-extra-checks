@@ -2,6 +2,8 @@
 
 ### Unreleased
 
+### 0.5.0
+
 - Fix ignore_checks
 - Skip models fields not inherited from fields.Field
 - Add ignore_types option
