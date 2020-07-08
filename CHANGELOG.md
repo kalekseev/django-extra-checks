@@ -2,6 +2,10 @@
 
 ### Unreleased
 
+- Fix ignore_checks
+- Skip models fields not inherited from fields.Field
+- Add ignore_types option
+
 ### 0.4.1
 
 - Fix message for *field-verbose-name-gettext-case*

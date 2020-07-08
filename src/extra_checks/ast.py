@@ -116,20 +116,7 @@ class FieldAST:
 
     @cached_property
     def verbose_name(self) -> Union[None, ast.Constant, ast.Call]:
-        result = getattr(self.kwargs.get("verbose_name"), "value", None)
-        if result:
-            return result
-        if (
-            self.field_class_name
-            not in ("OneToOneField", "ManyToManyField", "ForeignKey")
-            and self.args
-        ):
-            node = self.args[0]
-            if isinstance(node, ast.Call) and hasattr(node.func, "id"):
-                return node
-            elif isinstance(node, (ast.Constant, ast.Str)):
-                return node
-        return None
+        return getattr(self.kwargs.get("verbose_name"), "value", None)
 
     @cached_property
     def help_text(self) -> Optional[ast.AST]:

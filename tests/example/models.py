@@ -1,3 +1,5 @@
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.db import models
 from django.utils.translation import gettext_lazy
@@ -59,6 +61,11 @@ class ModelFieldVerboseName(models.Model):
     no_name_nested_field = NestedField(models.CharField(max_length=100))
 
 
+class ModelFieldHelpTextGettext(models.Model):
+    text = models.CharField(max_length=10, help_text=_("my help text"))
+    text_fail = models.CharField(max_length=10, help_text="my help text")
+
+
 class ModelFieldFileUploadTo(models.Model):
     image = models.ImageField(upload_to="path/to/media")
     file = models.FileField(upload_to="path/to/files")
@@ -82,6 +89,7 @@ class ModelFieldTextNull(models.Model):
 class ModelFieldNullFalse(models.Model):
     myfield = models.IntegerField()
     myfield_fail = models.IntegerField(null=False)
+    null_fail = models.NullBooleanField()
 
 
 class ModelFieldForeignKeyIndex(models.Model):
@@ -102,3 +110,13 @@ class ModelFieldForeignKeyIndex(models.Model):
 
     class Meta:
         unique_together = (("article", "author"), ("field_one", "field_two"))
+
+
+class GenericKeyOne(models.Model):
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    service = GenericForeignKey("content_type", "object_id")
+
+
+class GenericKeyTwo(models.Model):
+    ones = GenericRelation("GenericKeyOne")

@@ -1,12 +1,12 @@
 from django.apps import AppConfig
 
+from . import checks  # noqa
+from .registry import registry
+
 
 class ExtraChecksConfig(AppConfig):
     name = "extra_checks"
 
     def ready(self) -> None:
         super(ExtraChecksConfig, self).ready()
-        from . import checks  # noqa
-        from .registry import registry
-
         registry.bind()

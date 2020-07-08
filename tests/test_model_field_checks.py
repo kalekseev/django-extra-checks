@@ -1,13 +1,7 @@
 import pytest
 
 from extra_checks.checks import model_checks, model_field_checks
-from tests.example.models import (
-    ModelFieldFileUploadTo,
-    ModelFieldForeignKeyIndex,
-    ModelFieldNullFalse,
-    ModelFieldTextNull,
-    ModelFieldVerboseName,
-)
+from tests.example import models
 
 
 @pytest.fixture
@@ -20,7 +14,7 @@ def test_check_field_verbose_name(test_case):
         test_case.settings(
             {"checks": [model_field_checks.CheckFieldVerboseName.Id.value]}
         )
-        .models(ModelFieldVerboseName)
+        .models(models.ModelFieldVerboseName)
         .check(model_field_checks.CheckFieldVerboseName)
         .run()
     )
@@ -33,7 +27,7 @@ def test_check_field_verbose_name(test_case):
 
 def test_check_field_verbose_name_gettext(test_case):
     messages = (
-        test_case.models(ModelFieldVerboseName)
+        test_case.models(models.ModelFieldVerboseName)
         .settings(
             {"checks": [model_field_checks.CheckFieldVerboseNameGettext.Id.value]}
         )
@@ -51,22 +45,53 @@ def test_check_field_verbose_name_gettext(test_case):
 
 def test_check_field_verbose_name_gettext_case(test_case):
     messages = (
-        test_case.models(ModelFieldVerboseName)
+        test_case.models(models.ModelFieldVerboseName)
         .settings(
             {"checks": [model_field_checks.CheckFieldVerboseNameGettextCase.Id.value]}
         )
         .check(model_field_checks.CheckFieldVerboseNameGettextCase)
         .run()
     )
+    assert len(messages) == 1
+    assert messages[0].id == model_field_checks.CheckFieldVerboseNameGettextCase.Id.name
     assert {m.obj.name for m in messages} == {
         "gettext_case",
     }
-    assert messages[0].id == model_field_checks.CheckFieldVerboseNameGettextCase.Id.name
+
+
+def test_check_field_null_boolean(test_case):
+    messages = (
+        test_case.models(models.ModelFieldNullFalse)
+        .settings({"checks": [model_field_checks.CheckFieldNullBoolean.Id.value]})
+        .check(model_field_checks.CheckFieldNullBoolean)
+        .run()
+    )
+    assert len(messages) == 1
+    assert messages[0].id == model_field_checks.CheckFieldNullBoolean.Id.name
+    assert {m.obj.name for m in messages} == {
+        "null_fail",
+    }
+
+
+def test_check_field_help_text_gettext(test_case):
+    messages = (
+        test_case.settings(
+            {"checks": [model_field_checks.CheckFieldHelpTextGettext.Id.value]}
+        )
+        .models(models.ModelFieldHelpTextGettext)
+        .check(model_field_checks.CheckFieldHelpTextGettext)
+        .run()
+    )
+    assert len(messages) == 1
+    assert messages[0].id == model_field_checks.CheckFieldHelpTextGettext.Id.name
+    assert {m.obj.name for m in messages} == {
+        "text_fail",
+    }
 
 
 def test_check_field_file_upload_to(test_case):
     messages = (
-        test_case.models(ModelFieldFileUploadTo)
+        test_case.models(models.ModelFieldFileUploadTo)
         .settings({"checks": [model_field_checks.CheckFieldFileUploadTo.Id.value]})
         .check(model_field_checks.CheckFieldFileUploadTo)
         .run()
@@ -80,7 +105,7 @@ def test_check_field_file_upload_to(test_case):
 def test_check_field_text_null(test_case):
     messages = (
         test_case.settings({"checks": [model_field_checks.CheckFieldTextNull.Id.value]})
-        .models(ModelFieldTextNull)
+        .models(models.ModelFieldTextNull)
         .check(model_field_checks.CheckFieldTextNull)
         .run()
     )
@@ -96,7 +121,7 @@ def test_check_field_null_false(test_case):
         test_case.settings(
             {"checks": [model_field_checks.CheckFieldNullFalse.Id.value]}
         )
-        .models(ModelFieldNullFalse)
+        .models(models.ModelFieldNullFalse)
         .check(model_field_checks.CheckFieldNullFalse)
         .run()
     )
@@ -110,7 +135,7 @@ def test_check_field_foreign_key_index(test_case):
         test_case.settings(
             {"checks": [model_field_checks.CheckFieldForeignKeyIndex.Id.value]}
         )
-        .models(ModelFieldForeignKeyIndex)
+        .models(models.ModelFieldForeignKeyIndex)
         .check(model_field_checks.CheckFieldForeignKeyIndex)
         .run()
     )
@@ -131,7 +156,7 @@ def test_check_field_foreign_key_index_always(registry, test_case, settings):
     }
     messages = (
         test_case.settings(settings)
-        .models(ModelFieldForeignKeyIndex)
+        .models(models.ModelFieldForeignKeyIndex)
         .check(model_field_checks.CheckFieldForeignKeyIndex)
         .run()
     )
@@ -140,3 +165,66 @@ def test_check_field_foreign_key_index_always(registry, test_case, settings):
         "author",
         "another_article",
     }
+
+
+def test_generic_key_null(test_case):
+    """ensure custom fields without null attribute not checked by rule"""
+    (
+        test_case.settings(
+            {"checks": [model_field_checks.CheckFieldNullFalse.Id.value]}
+        )
+        .models(models.GenericKeyOne, models.GenericKeyTwo)
+        .check(model_field_checks.CheckFieldNullFalse)
+        .run()
+    )
+
+
+def test_verbose_name_of_related_field(test_case):
+    """if field inherit from RelatedField the first argument is not a verbose name."""
+    messages = (
+        test_case.settings(
+            {"checks": [model_field_checks.CheckFieldVerboseNameGettext.Id.value]}
+        )
+        .models(models.GenericKeyTwo)
+        .check(model_field_checks.CheckFieldVerboseNameGettext)
+        .run()
+    )
+    assert not messages
+
+
+def test_field_ignore_checks(test_case, registry):
+    """We must check that field.model is not in ignore_checks"""
+    messages = (
+        test_case.settings(
+            {"checks": [model_field_checks.CheckFieldVerboseNameGettext.Id.value]}
+        )
+        .models(models.ModelFieldVerboseName)
+        .check(model_field_checks.CheckFieldVerboseNameGettext)
+        .run()
+    )
+    assert messages
+    registry.ignore_checks(model_field_checks.CheckFieldVerboseNameGettext.Id)(
+        models.ModelFieldVerboseName
+    )
+    messages = test_case.run()
+    assert not messages
+
+
+def test_field_ignore_types(test_case, registry):
+    messages = (
+        test_case.settings(
+            {
+                "checks": [
+                    {
+                        "id": model_field_checks.CheckFieldFileUploadTo.Id.value,
+                        "ignore_types": ["django.db.models.ImageField"],
+                    }
+                ],
+            }
+        )
+        .models(models.ModelFieldFileUploadTo)
+        .check(model_field_checks.CheckFieldFileUploadTo)
+        .run()
+    )
+    assert len(messages) == 1
+    assert {m.obj.name for m in messages} == {"file_fail"}

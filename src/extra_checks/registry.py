@@ -9,6 +9,8 @@ from typing import (
     List,
     Optional,
     Sequence,
+    Set,
+    Tuple,
     Type,
     Union,
 )
@@ -18,7 +20,7 @@ import django.core.checks
 from django import forms
 from django.conf import settings
 
-from . import _IGNORED, CheckId
+from . import CheckId
 from .forms import ConfigForm
 
 if TYPE_CHECKING:
@@ -32,20 +34,60 @@ class ChecksConfig:
         errors: Optional[forms.utils.ErrorDict] = None,
         checks: Optional[Dict[CheckId, dict]] = None,
         include_apps: Optional[Iterable[str]] = None,
+        ignored_objects: Optional[Dict[CheckId, Set[Any]]] = None,
     ) -> None:
         self.checks: Dict[CheckId, dict] = {**(checks or {}), CheckId.X001: {}}
         self.include_apps = include_apps
         self.errors = errors
+        self.ignored_objects: Dict[CheckId, set] = ignored_objects or {}
 
     @classmethod
-    def create(cls, checks: Dict["Type[BaseCheck]", Sequence[str]]) -> "ChecksConfig":
-        check_forms = {r.Id: r.settings_form_class for r in checks}
+    def create(
+        cls,
+        include_checks: Dict["Type[BaseCheck]", Sequence[str]],
+        ignore_checks: Optional[Dict[Any, Set[Union[str, CheckId]]]] = None,
+    ) -> "ChecksConfig":
+        check_forms = {r.Id: r.settings_form_class for r in include_checks}
         if not hasattr(settings, "EXTRA_CHECKS"):
             return cls()
         form = ConfigForm(settings.EXTRA_CHECKS)
         if not form.is_valid(check_forms):
             return cls(errors=form.errors)
-        return cls(**form.cleaned_data)
+        ignored, errors = ChecksConfig._build_ignored(ignore_checks or {})
+        if errors:
+            return cls(errors={"__all__": errors})  # type: ignore
+        return cls(ignored_objects=ignored, **form.cleaned_data)
+
+    @staticmethod
+    def _check_id(value: object) -> Optional["CheckId"]:
+        if isinstance(value, CheckId):
+            return value
+        try:
+            return CheckId(value)
+        except ValueError:
+            pass
+        try:
+            return getattr(CheckId, value)  # type: ignore
+        except (TypeError, AttributeError):
+            pass
+        return None
+
+    @staticmethod
+    def _build_ignored(
+        ignore_checks: Dict[Any, Set[Union[str, CheckId]]]
+    ) -> Tuple[Dict[CheckId, Set[Any]], List[str]]:
+        errors = []
+        ignored: Dict[CheckId, set] = {}
+        for obj, ids in ignore_checks.items():
+            for id_ in ids:
+                check_id = ChecksConfig._check_id(id_)
+                if check_id:
+                    ignored.setdefault(check_id, set()).add(obj)
+                else:
+                    errors.append(
+                        f"Unknown check ({id_}) provided to the 'ignore_checks'."
+                    )
+        return ignored, errors
 
 
 _ChecksHandler = Callable[[Optional[List[Any]], Any], Iterator[Any]]
@@ -55,8 +97,9 @@ class Registry:
     def __init__(self) -> None:
         self.registered_checks: Dict["Type[BaseCheck]", Sequence[str]] = {}
         self.enabled_checks: Dict[str, List["BaseCheck"]] = {}
+        self.ignored_checks: Dict[Any, Set[Union[CheckId, str]]] = {}
         self.handlers: Dict[str, _ChecksHandler] = {}
-        self.is_healthy = True
+        self._config: Optional[ChecksConfig] = None
 
     def _register(
         self, tags: List[str], check_class: "Type[BaseCheck]"
@@ -88,15 +131,11 @@ class Registry:
         return partial(self._add_handler, tag)
 
     def bind(self) -> Dict[str, Callable]:
-        ignored: Dict[Union[CheckId, str], set] = {}
-        for obj, ids in _IGNORED.items():
-            for id_ in ids:
-                ignored.setdefault(id_, set()).add(obj)
-        config = ChecksConfig.create(self.registered_checks)
+        config = ChecksConfig.create(self.registered_checks, self.ignored_checks)
         for check_class, tags in self.registered_checks.items():
             if check_class.Id in config.checks:
                 check = check_class(
-                    ignored_objects=ignored.get(check_class.Id, set()),
+                    ignore_objects=config.ignored_objects.get(check_class.Id, set()),
                     **config.checks[check_class.Id],
                 )
                 for tag in tags:
@@ -108,8 +147,20 @@ class Registry:
             )
             if bh:
                 tag_handlers[tag] = bh
-        self.is_healthy = not config.errors
+        self._config = config
         return tag_handlers
+
+    @property
+    def is_healthy(self):
+        return not self._config.errors
+
+    def ignore_checks(self, *args: Union[CheckId, str]) -> Callable[[Any], Any]:
+        def f(entity: Any) -> Any:
+            self.ignored_checks[entity] = set(args)
+            return entity
+
+        return f
 
 
 registry = Registry()
+ignore_checks = registry.ignore_checks

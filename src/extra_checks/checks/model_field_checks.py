@@ -1,6 +1,6 @@
 import ast
 from abc import abstractmethod
-from typing import Any, Iterator, Type
+from typing import Any, Iterator, Type, Union
 
 import django.core.checks
 from django import forms
@@ -16,9 +16,16 @@ from .base_checks import BaseCheck, BaseCheckMixin
 class CheckModelField(BaseCheck):
     @abstractmethod
     def apply(
-        self, field: object, *, field_ast: FieldAST, model: Type[models.Model]
+        self,
+        field: models.fields.Field,
+        *,
+        field_ast: FieldAST,
+        model: Type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
         raise NotImplementedError()
+
+    def is_ignored(self, obj: Any) -> bool:
+        return obj.model in self.ignore_objects or type(obj) in self.ignore_types
 
 
 class GetTextMixin(BaseCheckMixin):
@@ -38,14 +45,32 @@ class GetTextMixin(BaseCheckMixin):
         )
 
 
+def get_verbose_name(
+    field: models.fields.Field, field_ast: FieldAST
+) -> Union[None, ast.Constant, ast.Call]:
+    result = field_ast.verbose_name
+    if result:
+        return result
+    if isinstance(field, models.fields.related.RelatedField):
+        return None
+    if field_ast.args:
+        node = field_ast.args[0]
+        if isinstance(node, ast.Call) and hasattr(node.func, "id"):
+            return node
+        elif isinstance(node, (ast.Constant, ast.Str)):
+            return node
+    return None
+
+
 @registry.register(django.core.checks.Tags.models)
 class CheckFieldVerboseName(CheckModelField):
     Id = CheckId.X050
 
     def apply(
-        self, field: object, field_ast: FieldAST, **kwargs: Any
+        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if not field_ast.verbose_name:
+        verbose_name = get_verbose_name(field, field_ast)
+        if not verbose_name:
             yield self.message(
                 "Field has no verbose name.",
                 hint="Set verbose name on the field.",
@@ -58,9 +83,10 @@ class CheckFieldVerboseNameGettext(GetTextMixin, CheckModelField):
     Id = CheckId.X051
 
     def apply(
-        self, field: object, field_ast: FieldAST, **kwargs: Any
+        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if field_ast.verbose_name and not self._is_gettext_node(field_ast.verbose_name):
+        verbose_name = get_verbose_name(field, field_ast)
+        if verbose_name and not self._is_gettext_node(verbose_name):
             yield self.message(
                 "Verbose name should use gettext.",
                 hint="Use gettext on the verbose name.",
@@ -73,10 +99,11 @@ class CheckFieldVerboseNameGettextCase(GetTextMixin, CheckModelField):
     Id = CheckId.X052
 
     def apply(
-        self, field: object, field_ast: FieldAST, **kwargs: Any
+        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if field_ast.verbose_name and self._is_gettext_node(field_ast.verbose_name):
-            value = field_ast.verbose_name.args[0].s  # type: ignore
+        verbose_name = get_verbose_name(field, field_ast)
+        if verbose_name and self._is_gettext_node(verbose_name):
+            value = verbose_name.args[0].s  # type: ignore
             if not all(
                 w.islower() or w.isupper() or w.isdigit() for w in value.split(" ")
             ):
@@ -92,7 +119,7 @@ class CheckFieldHelpTextGettext(GetTextMixin, CheckModelField):
     Id = CheckId.X053
 
     def apply(
-        self, field: object, field_ast: FieldAST, **kwargs: Any
+        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if field_ast.help_text and not self._is_gettext_node(field_ast.help_text):
             yield self.message(
@@ -107,7 +134,7 @@ class CheckFieldFileUploadTo(CheckModelField):
     Id = CheckId.X054
 
     def apply(
-        self, field: object, **kwargs: Any
+        self, field: models.fields.Field, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, models.FileField):
             if not field.upload_to:
@@ -123,7 +150,7 @@ class CheckFieldTextNull(CheckModelField):
     Id = CheckId.X055
 
     def apply(
-        self, field: object, **kwargs: Any
+        self, field: models.fields.Field, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, (models.CharField, models.TextField)):
             if field.null:
@@ -140,7 +167,7 @@ class CheckFieldNullBoolean(CheckModelField):
     Id = CheckId.X056
 
     def apply(
-        self, field: object, **kwargs: Any
+        self, field: models.fields.Field, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, models.NullBooleanField):
             yield self.message(
@@ -155,15 +182,14 @@ class CheckFieldNullFalse(CheckModelField):
     Id = CheckId.X057
 
     def apply(
-        self, field: object, field_ast: FieldAST, **kwargs: Any
+        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if isinstance(field, models.fields.Field):
-            if field.null is False and "null" in field_ast.kwargs:
-                yield self.message(
-                    "Argument `null=False` is default.",
-                    hint="Remove `null=False` from field arguments.",
-                    obj=field,
-                )
+        if field.null is False and "null" in field_ast.kwargs:
+            yield self.message(
+                "Argument `null=False` is default.",
+                hint="Remove `null=False` from field arguments.",
+                obj=field,
+            )
 
 
 @registry.register(django.core.checks.Tags.models)
@@ -183,7 +209,10 @@ class CheckFieldForeignKeyIndex(CheckModelField):
         super().__init__(**kwargs)
 
     def apply(
-        self, field: object, field_ast: FieldAST, model: Type[models.Model],
+        self,
+        field: models.fields.Field,
+        field_ast: FieldAST,
+        model: Type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, models.fields.related.RelatedField):
             if field.many_to_one and field_ast.kwargs.get("db_index") is None:

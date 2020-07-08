@@ -20,10 +20,14 @@ class BaseCheck(ABC):
     level = django.core.checks.WARNING
 
     def __init__(
-        self, level: Optional[int] = None, ignored_objects: Optional[Set[Any]] = None
+        self,
+        level: Optional[int] = None,
+        ignore_objects: Optional[Set[Any]] = None,
+        ignore_types: Optional[Set[str]] = None,
     ) -> None:
         self.level = level or self.level
-        self.ignored_objects = ignored_objects or set()
+        self.ignore_objects = ignore_objects or set()
+        self.ignore_types = ignore_types or set()
 
     def __call__(
         self, obj: Any, **kwargs: Any
@@ -32,7 +36,7 @@ class BaseCheck(ABC):
             yield from self.apply(obj, **kwargs)  # type: ignore
 
     def is_ignored(self, obj: Any) -> bool:
-        return obj in self.ignored_objects
+        return obj in self.ignore_objects or type(obj) in self.ignore_types
 
     def message(
         self, message: str, hint: Optional[str] = None, obj: Any = None

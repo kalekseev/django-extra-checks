@@ -59,9 +59,10 @@ def check_models(
             yield from check(model, model_ast=model_ast)
         if field_checks:
             for field, node in model_ast.field_nodes:
-                field_ast = FieldAST(node)
-                for check in field_checks:
-                    yield from check(field, field_ast=field_ast, model=model)
+                if isinstance(field, models.fields.Field):
+                    field_ast = FieldAST(node)
+                    for check in field_checks:
+                        yield from check(field, field_ast=field_ast, model=model)
 
 
 class CheckModel(BaseCheck):

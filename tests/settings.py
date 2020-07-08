@@ -13,8 +13,6 @@ INSTALLED_APPS = [
     "extra_checks",
 ]
 
-DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3"}}
-
 EXTRA_CHECKS = {
     "include_apps": ["tests.example"],
     "checks": [
@@ -27,8 +25,27 @@ EXTRA_CHECKS = {
         {"id": "model-meta-attribute", "attrs": ["db_table"], "level": "CRITICAL"},
     ],
 }
+
+
+DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3"}}
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "OPTIONS": {
+            "context_processors": [
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    }
+]
+
+MIDDLEWARE = [
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+]
+
 ROOT_URLCONF = "tests.urls"
 
-SILENCED_SYSTEM_CHECKS = [
-    "fields.E210",
-]
+SILENCED_SYSTEM_CHECKS = ["fields.E210"]
