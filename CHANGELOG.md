@@ -2,6 +2,8 @@
 
 ### Unreleased
 
+### 0.6.0
+
 - Add checks:
     - field-default-null
 
@@ -18,7 +20,7 @@
 ### 0.4.0
 
 - Add infra for rest framework serializers checks
-- Add checks
+- Add checks:
     - drf-model-serializer-extra-kwargs
     - drf-model-serializer-meta-attribute
     - model-admin
