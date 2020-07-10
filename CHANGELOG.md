@@ -2,6 +2,9 @@
 
 ### Unreleased
 
+- Add checks:
+    - field-default-null
+
 ### 0.5.0
 
 - Fix ignore_checks

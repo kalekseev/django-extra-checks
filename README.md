@@ -74,6 +74,11 @@ EXTRA_CHECKS = {
 - **field-boolean-null** - prefer using `BooleanField(null=True)` instead of `NullBooleanField`.
 - **field-null** - don't pass `null=False` to model fields (this is django default).
 - **field-foreign-key-index** - ForeignKey fields must specify `db_index` explicitly (to apply to unique together only: `when: unique_together`).
+- **field-default-null** - If field nullable (`null=True`), then
+    `default=None` argument is redundant and should be removed.
+    **WARNING** Be aware that setting is database dependent,
+    eg. Oracle interprets empty strings as nulls as a result
+    django uses empty string instead of null as default.
 
 ### DRF Serializers
 

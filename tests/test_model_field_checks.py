@@ -228,3 +228,16 @@ def test_field_ignore_types(test_case):
     )
     assert len(messages) == 1
     assert {m.obj.name for m in messages} == {"file_fail"}
+
+
+def test_field_null_default_null(test_case):
+    messages = (
+        test_case.settings(
+            {"checks": [model_field_checks.CheckFieldDefaultNull.Id.value]}
+        )
+        .models(models.ModelFieldNullDefault)
+        .check(model_field_checks.CheckFieldDefaultNull)
+        .run()
+    )
+    assert len(messages) == 1
+    assert messages[0].obj.name == "myfield_fail"

@@ -15,5 +15,6 @@ class CheckId(str, enum.Enum):
     X056 = "field-boolean-null"
     X057 = "field-null"
     X058 = "field-foreign-key-db-index"
+    X059 = "field-default-null"
     X301 = "drf-model-serializer-extra-kwargs"
     X302 = "drf-model-serializer-meta-attribute"

@@ -231,3 +231,18 @@ class CheckFieldForeignKeyIndex(CheckModelField):
                         hint="Specify `db_index` field argument.",
                         obj=field,
                     )
+
+
+@registry.register(django.core.checks.Tags.models)
+class CheckFieldDefaultNull(CheckModelField):
+    Id = CheckId.X059
+
+    def apply(
+        self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        if field.null and field.default is None and "default" in field_ast.kwargs:
+            yield self.message(
+                "Argument `default=None` is redundant if `null=True` is set. (see docs about exceptions).",
+                hint="Remove `default=None` from field arguments.",
+                obj=field,
+            )

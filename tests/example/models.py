@@ -92,6 +92,11 @@ class ModelFieldNullFalse(models.Model):
     null_fail = models.NullBooleanField()
 
 
+class ModelFieldNullDefault(models.Model):
+    myfield = models.IntegerField(default=None)
+    myfield_fail = models.IntegerField(null=True, default=None)
+
+
 class ModelFieldForeignKeyIndex(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name="+")
     author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="+")
