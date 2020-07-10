@@ -145,7 +145,7 @@ def test_check_field_foreign_key_index(test_case):
     }
 
 
-def test_check_field_foreign_key_index_always(registry, test_case, settings):
+def test_check_field_foreign_key_index_always(test_case):
     settings = {
         "checks": [
             {
@@ -210,7 +210,7 @@ def test_field_ignore_checks(test_case, registry):
     assert not messages
 
 
-def test_field_ignore_types(test_case, registry):
+def test_field_ignore_types(test_case):
     messages = (
         test_case.settings(
             {

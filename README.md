@@ -78,7 +78,7 @@ EXTRA_CHECKS = {
 ### DRF Serializers
 
 - **drf-model-serializer-extra-kwargs** - ModelSerializer's extra_kwargs must not include fields that specified on serializer.
-- **drf-model-serializer-meta-attribute** - Each ModelSerializer.Meta must have all attributes specified in `attrs`, [good use case](https://hakibenita.com/django-rest-framework-slow#bonus-forcing-good-habits).
+- **drf-model-serializer-meta-attribute** - Each ModelSerializer.Meta must have all attributes specified in `attrs`, [use case](https://hakibenita.com/django-rest-framework-slow#bonus-forcing-good-habits).
 
 ## Development
 
