@@ -198,15 +198,39 @@ class CheckFieldForeignKeyIndex(CheckModelField):
 
     class CheckFieldForeignKeyIndexForm(BaseCheckForm):
         when = forms.ChoiceField(
-            choices=[("unique_together", "unique_together"), ("always", "always")],
-            required=False,
+            choices=[("indexes", "indexes"), ("always", "always")], required=False,
         )
 
     settings_form_class = CheckFieldForeignKeyIndexForm
 
     def __init__(self, when: str, **kwargs: Any) -> None:
-        self.when = when or "unique_together"
+        self.when = when or "indexes"
         super().__init__(**kwargs)
+
+    @classmethod
+    def get_index_values_in_meta(cls, model: Type[models.Model]) -> Iterator[str]:
+        for entry in model._meta.unique_together:
+            if isinstance(entry, str):
+                yield entry
+            else:
+                yield from entry
+        for entry in model._meta.index_together:
+            if isinstance(entry, str):
+                yield entry
+            else:
+                yield from entry
+        for constraint in model._meta.constraints:
+            if isinstance(constraint, models.UniqueConstraint):
+                yield from constraint.fields
+        for index in model._meta.indexes:
+            yield from index.fields
+
+    @classmethod
+    def get_fields_with_indexes_in_meta(
+        cls, model: Type[models.Model]
+    ) -> Iterator[str]:
+        for entry in cls.get_index_values_in_meta(model):
+            yield entry.lstrip("-")
 
     def apply(
         self,
@@ -216,10 +240,8 @@ class CheckFieldForeignKeyIndex(CheckModelField):
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, models.fields.related.RelatedField):
             if field.many_to_one and field_ast.kwargs.get("db_index") is None:
-                if self.when == "unique_together":
-                    if any(
-                        field.name in index for index in model._meta.unique_together
-                    ):
+                if self.when == "indexes":
+                    if field.name in self.get_fields_with_indexes_in_meta(model):
                         yield self.message(
                             "ForeignKey must set `db_index` explicitly if it present in unique_together.",
                             hint="Specify `db_index` field argument.",

@@ -64,6 +64,8 @@ EXTRA_CHECKS = {
 - **extra-checks-config** - settings.EXTRA_CHECKS is valid config for django-extra-checks (always enabled).
 - **model-attribute** - Each Model in the project must have all attributes from `attrs` setting specified.
 - **model-meta-attribute** - Each Model.Meta in the project must have all attributes from `attrs` setting specified.
+- **no-unique-together** - Use UniqueConstraint with the constraints option instead.
+- **no-index-together** - Use the indexes option instead.
 - **model-admin** - Each model must be registered in admin.
 - **field-file-upload-to** - FileField/ImageField must have non empty `upload_to` argument.
 - **field-verbose-name** - All model's fields must have verbose name.
@@ -73,7 +75,7 @@ EXTRA_CHECKS = {
 - **field-text-null** - text fields shoudn't use `null=True`.
 - **field-boolean-null** - prefer using `BooleanField(null=True)` instead of `NullBooleanField`.
 - **field-null** - don't pass `null=False` to model fields (this is django default).
-- **field-foreign-key-index** - ForeignKey fields must specify `db_index` explicitly (to apply to unique together only: `when: unique_together`).
+- **field-foreign-key-index** - ForeignKey fields must specify `db_index` explicitly (to apply only to fields in indexes: `when: indexes`).
 - **field-default-null** - If field nullable (`null=True`), then
     `default=None` argument is redundant and should be removed.
     **WARNING** Be aware that setting is database dependent,

@@ -98,7 +98,9 @@ class ModelFieldNullDefault(models.Model):
 
 
 class ModelFieldForeignKeyIndex(models.Model):
-    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name="+")
+    article = models.ForeignKey(
+        Article, on_delete=models.CASCADE, related_name="+", db_index=True
+    )
     author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="+")
     another_article = models.ForeignKey(
         Article, on_delete=models.CASCADE, related_name="+"
@@ -107,14 +109,33 @@ class ModelFieldForeignKeyIndex(models.Model):
         Article, on_delete=models.CASCADE, related_name="+", db_index=True
     )
     field_one = models.ForeignKey(
-        ModelFieldTextNull, on_delete=models.CASCADE, related_name="+", db_index=False
+        ModelFieldTextNull, on_delete=models.CASCADE, related_name="+"
     )
     field_two = models.ForeignKey(
         ModelFieldNullFalse, on_delete=models.CASCADE, related_name="+", db_index=True
     )
+    field_three = models.ForeignKey(
+        ModelFieldNullFalse, on_delete=models.CASCADE, related_name="+"
+    )
+    field_in_indexes = models.ForeignKey(
+        ModelFieldNullFalse, on_delete=models.CASCADE, related_name="+"
+    )
+    field_index_desc = models.ForeignKey(
+        ModelFieldNullFalse, on_delete=models.CASCADE, related_name="+"
+    )
 
     class Meta:
-        unique_together = (("article", "author"), ("field_one", "field_two"))
+        unique_together = [("author", "article")]
+        index_together = ("field_one", "field_two")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("author", "field_three"), name="fi_author_field_unique"
+            )
+        ]
+        indexes = [
+            models.Index(fields=("field_in_indexes",)),
+            models.Index(fields=("field_in_indexes", "-field_index_desc")),
+        ]
 
 
 class GenericKeyOne(models.Model):

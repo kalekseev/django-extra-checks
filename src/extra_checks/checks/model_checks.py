@@ -155,3 +155,29 @@ class CheckModelAdmin(CheckModel):
     ) -> Iterator[django.core.checks.CheckMessage]:
         if model not in self.models_with_admin:
             yield self.message("The model is not registered in admin.", obj=model)
+
+
+@registry.register(django.core.checks.Tags.models)
+class CheckNoUniqueTogether(CheckModel):
+    Id = CheckId.X013
+    level = django.core.checks.ERROR
+
+    def apply(
+        self, model: Type[models.Model], model_ast: ModelAST
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        if "unique_together" in model_ast.meta_vars:
+            yield self.message(
+                "Use UniqueConstraint with the constraints option instead.", obj=model,
+            )
+
+
+@registry.register(django.core.checks.Tags.models)
+class CheckNoIndexTogether(CheckModel):
+    Id = CheckId.X014
+    level = django.core.checks.ERROR
+
+    def apply(
+        self, model: Type[models.Model], model_ast: ModelAST
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        if "index_together" in model_ast.meta_vars:
+            yield self.message("Use the indexes option instead", obj=model)

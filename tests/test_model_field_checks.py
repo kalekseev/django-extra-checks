@@ -140,8 +140,11 @@ def test_check_field_foreign_key_index(test_case):
         .run()
     )
     assert {m.obj.name for m in messages} == {
-        "article",
+        "field_one",
         "author",
+        "field_three",
+        "field_in_indexes",
+        "field_index_desc",
     }
 
 
@@ -161,9 +164,12 @@ def test_check_field_foreign_key_index_always(test_case):
         .run()
     )
     assert {m.obj.name for m in messages} == {
-        "article",
+        "field_one",
         "author",
         "another_article",
+        "field_three",
+        "field_in_indexes",
+        "field_index_desc",
     }
 
 

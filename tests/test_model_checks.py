@@ -1,7 +1,12 @@
 import pytest
 
 from extra_checks.checks import model_checks
-from tests.example.models import Article, Author, ModelFieldTextNull
+from tests.example.models import (
+    Article,
+    Author,
+    ModelFieldForeignKeyIndex,
+    ModelFieldTextNull,
+)
 
 
 @pytest.fixture
@@ -80,3 +85,25 @@ def test_admin_models(test_case):
     messages = test_case.models(ModelFieldTextNull).run()
     assert len(messages) == 1
     assert messages[0].id == model_checks.CheckModelAdmin.Id.name
+
+
+def test_no_unique_together(test_case):
+    messages = (
+        test_case.models(ModelFieldForeignKeyIndex)
+        .settings({"checks": [model_checks.CheckNoUniqueTogether.Id.value]})
+        .check(model_checks.CheckNoUniqueTogether)
+        .run()
+    )
+    assert len(messages) == 1
+    assert messages[0].id == model_checks.CheckNoUniqueTogether.Id.name
+
+
+def test_no_index_together(test_case):
+    messages = (
+        test_case.models(ModelFieldForeignKeyIndex)
+        .settings({"checks": [model_checks.CheckNoIndexTogether.Id.value]})
+        .check(model_checks.CheckNoIndexTogether)
+        .run()
+    )
+    assert len(messages) == 1
+    assert messages[0].id == model_checks.CheckNoIndexTogether.Id.name
