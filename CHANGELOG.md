@@ -2,6 +2,10 @@
 
 ### Unreleased
 
+### 0.7.1
+
+- Fix index checks level and message
+
 ### 0.7.0
 
 - Check `field-foreign-key-index` now accepts `when: indexes` instead of `when: unique_toegether` because now it search for duplicate indexes in `Meta.indexes`, `Meta.unique_toegether` and `Meta.constraints`

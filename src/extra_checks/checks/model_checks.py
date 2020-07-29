@@ -160,7 +160,6 @@ class CheckModelAdmin(CheckModel):
 @registry.register(django.core.checks.Tags.models)
 class CheckNoUniqueTogether(CheckModel):
     Id = CheckId.X013
-    level = django.core.checks.ERROR
 
     def apply(
         self, model: Type[models.Model], model_ast: ModelAST
@@ -174,7 +173,6 @@ class CheckNoUniqueTogether(CheckModel):
 @registry.register(django.core.checks.Tags.models)
 class CheckNoIndexTogether(CheckModel):
     Id = CheckId.X014
-    level = django.core.checks.ERROR
 
     def apply(
         self, model: Type[models.Model], model_ast: ModelAST

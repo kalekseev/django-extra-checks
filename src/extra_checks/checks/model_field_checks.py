@@ -243,7 +243,7 @@ class CheckFieldForeignKeyIndex(CheckModelField):
                 if self.when == "indexes":
                     if field.name in self.get_fields_with_indexes_in_meta(model):
                         yield self.message(
-                            "ForeignKey must set `db_index` explicitly if it present in unique_together.",
+                            "ForeignKey field must set `db_index` explicitly if it present in other indexes.",
                             hint="Specify `db_index` field argument.",
                             obj=field,
                         )
