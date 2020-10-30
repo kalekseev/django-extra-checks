@@ -81,7 +81,8 @@ class DictField(forms.ChoiceField):
             return {}
         if not isinstance(value, dict):
             raise forms.ValidationError(
-                self.error_messages["invalid_dict"], code="invalid_dict",
+                self.error_messages["invalid_dict"],
+                code="invalid_dict",
             )
         return {str(k): v for k, v in value.items()}
 

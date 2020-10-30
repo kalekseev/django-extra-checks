@@ -166,7 +166,8 @@ class CheckNoUniqueTogether(CheckModel):
     ) -> Iterator[django.core.checks.CheckMessage]:
         if "unique_together" in model_ast.meta_vars:
             yield self.message(
-                "Use UniqueConstraint with the constraints option instead.", obj=model,
+                "Use UniqueConstraint with the constraints option instead.",
+                obj=model,
             )
 
 

@@ -198,7 +198,8 @@ class CheckFieldForeignKeyIndex(CheckModelField):
 
     class CheckFieldForeignKeyIndexForm(BaseCheckForm):
         when = forms.ChoiceField(
-            choices=[("indexes", "indexes"), ("always", "always")], required=False,
+            choices=[("indexes", "indexes"), ("always", "always")],
+            required=False,
         )
 
     settings_form_class = CheckFieldForeignKeyIndexForm
