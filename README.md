@@ -75,7 +75,7 @@ EXTRA_CHECKS = {
 - **field-text-null** - text fields shoudn't use `null=True`.
 - **field-boolean-null** - prefer using `BooleanField(null=True)` instead of `NullBooleanField`.
 - **field-null** - don't pass `null=False` to model fields (this is django default).
-- **field-foreign-key-index** - ForeignKey fields must specify `db_index` explicitly (to apply only to fields in indexes: `when: indexes`).
+- **field-foreign-key-db-index** - ForeignKey fields must specify `db_index` explicitly (to apply only to fields in indexes: `when: indexes`).
 - **field-default-null** - If field nullable (`null=True`), then
     `default=None` argument is redundant and should be removed.
     **WARNING** Be aware that setting is database dependent,
