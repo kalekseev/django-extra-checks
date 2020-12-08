@@ -81,6 +81,7 @@ EXTRA_CHECKS = {
     **WARNING** Be aware that setting is database dependent,
     eg. Oracle interprets empty strings as nulls as a result
     django uses empty string instead of null as default.
+- **field-choices-constraint** - Fields with choices must have companion CheckConstraint to enforce choices on database level, [details](https://adamj.eu/tech/2020/01/22/djangos-field-choices-dont-constrain-your-data/).
 
 ### DRF Serializers
 
@@ -97,3 +98,4 @@ The project was built using ideas and code snippets from:
 
 - [Haki Benita](https://medium.com/@hakibenita/automating-the-boring-stuff-in-django-using-the-check-framework-3495fb550a6a)
 - [Jon Dufresne](https://github.com/jdufresne/django-check-admin)
+- [Adam Johnson](https://adamj.eu/tech/2020/01/22/djangos-field-choices-dont-constrain-your-data/)
