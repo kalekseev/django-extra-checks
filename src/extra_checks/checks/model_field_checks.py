@@ -276,7 +276,7 @@ class CheckFieldChoicesConstraint(CheckModelField):
     Id = CheckId.X060
 
     @staticmethod
-    def _repr_choice(value):
+    def _repr_choice(value: Any) -> str:
         if isinstance(value, str):
             return f'"{value}"'
         return str(value)
