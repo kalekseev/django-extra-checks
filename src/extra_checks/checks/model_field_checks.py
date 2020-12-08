@@ -269,3 +269,40 @@ class CheckFieldDefaultNull(CheckModelField):
                 hint="Remove `default=None` from field arguments.",
                 obj=field,
             )
+
+
+@registry.register(django.core.checks.Tags.models)
+class CheckFieldChoicesConstraint(CheckModelField):
+    Id = CheckId.X060
+
+    @staticmethod
+    def _repr_choice(value):
+        if isinstance(value, str):
+            return f'"{value}"'
+        return str(value)
+
+    def apply(
+        self, field: models.fields.Field, field_ast: FieldAST, model: Type[models.Model]
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        if field.choices:
+            field_choices = [c[0] for c in field.choices]
+            if field.blank:
+                field_choices.append("")
+            in_name = f"{field.name}__in"
+            null_name = f"{field.name}__isnull"
+            for constraint in model._meta.constraints:
+                if isinstance(constraint, models.CheckConstraint):
+                    conditions = dict(constraint.check.children)
+                    if (
+                        in_name in conditions
+                        and set(field_choices) == set(conditions[in_name])
+                    ) and (not field.null or conditions.get(null_name) is True):
+                        return
+            check = f'models.Q({field.name}__in=[{", ".join([self._repr_choice(c) for c in field_choices])}])'
+            if field.null:
+                check += f" | models.Q({field.name}__isnull=True)"
+            yield self.message(
+                "Field with choices must have companion CheckConstraint to enforce choices on database level.",
+                hint=f'Add to Meta.constraints: `models.CheckConstraint(name="%(app_label)s_%(class)s_{field.name}_valid", check={check})`',
+                obj=field,
+            )

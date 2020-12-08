@@ -146,3 +146,40 @@ class GenericKeyOne(models.Model):
 
 class GenericKeyTwo(models.Model):
     ones = GenericRelation("GenericKeyOne")
+
+
+class ChoicesConstraint(models.Model):
+    non_choice = models.IntegerField()
+    empty = models.IntegerField(choices=[])
+    partial = models.CharField(
+        choices=[("S", "simple"), ("C", "complex")], max_length=1
+    )
+    missed = models.IntegerField(choices=[(1, "One"), (2, "Two")])
+    covered = models.CharField(choices=[("A", "a"), ("B", "b")])
+    blank = models.CharField(choices=[("A", "a"), ("B", "b")], blank=True)
+    blank_missed = models.CharField(choices=[("A", "a"), ("B", "b")], blank=True)
+    none = models.IntegerField(choices=[(1, "One"), (2, "Two")], null=True)
+    none_missed = models.IntegerField(choices=[(1, "One"), (2, "Two")], null=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                name="partial_valid", check=models.Q(name__in=["S"])
+            ),
+            models.CheckConstraint(
+                name="covered_valid", check=models.Q(covered__in=("A", "B"))
+            ),
+            models.CheckConstraint(
+                name="blank", check=models.Q(blank__in=("A", "B", ""))
+            ),
+            models.CheckConstraint(
+                name="blank_missed", check=models.Q(blank_missed__in=("A", "B"))
+            ),
+            models.CheckConstraint(
+                name="none",
+                check=models.Q(none__in=(1, 2)) | models.Q(none__isnull=True),
+            ),
+            models.CheckConstraint(
+                name="none_missed", check=models.Q(none_missed__in=(1, 2))
+            ),
+        ]
