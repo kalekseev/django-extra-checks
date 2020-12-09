@@ -158,8 +158,12 @@ class ChoicesConstraint(models.Model):
     covered = models.CharField(choices=[("A", "a"), ("B", "b")])
     blank = models.CharField(choices=[("A", "a"), ("B", "b")], blank=True)
     blank_missed = models.CharField(choices=[("A", "a"), ("B", "b")], blank=True)
-    none = models.IntegerField(choices=[(1, "One"), (2, "Two")], null=True)
-    none_missed = models.IntegerField(choices=[(1, "One"), (2, "Two")], null=True)
+    blank_included = models.CharField(
+        choices=[("A", "a"), ("B", "b"), ("", "---")], blank=True
+    )
+    grouped = models.IntegerField(
+        choices=[("g1", ((1, "1"), (2, "2"))), ("g2", ((3, "3"),))]
+    )
 
     class Meta:
         constraints = [
@@ -170,16 +174,12 @@ class ChoicesConstraint(models.Model):
                 name="covered_valid", check=models.Q(covered__in=("A", "B"))
             ),
             models.CheckConstraint(
-                name="blank", check=models.Q(blank__in=("A", "B", ""))
+                name="blank_valid", check=models.Q(blank__in=("A", "B", ""))
             ),
             models.CheckConstraint(
-                name="blank_missed", check=models.Q(blank_missed__in=("A", "B"))
+                name="blank_missed_valid", check=models.Q(blank_missed__in=("A", "B"))
             ),
             models.CheckConstraint(
-                name="none",
-                check=models.Q(none__in=(1, 2)) | models.Q(none__isnull=True),
-            ),
-            models.CheckConstraint(
-                name="none_missed", check=models.Q(none_missed__in=(1, 2))
+                name="grouped_valid", check=models.Q(grouped__in=(1, 2, 3))
             ),
         ]
