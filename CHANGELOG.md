@@ -2,6 +2,11 @@
 
 ### Unreleased
 
+### 0.8.0
+
+- Add checks:
+    - `field-choices-constraint`
+
 ### 0.7.1
 
 - Fix index checks level and message
