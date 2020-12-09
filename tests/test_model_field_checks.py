@@ -259,13 +259,13 @@ def test_field_choices_constraint(test_case):
         .run()
     )
     errors = {m.obj.name: m for m in messages}
-    assert errors.keys() == {"partial", "missed", "blank_missed", "none_missed"}
+    assert errors.keys() == {"partial", "missed", "blank_missed", "blank_included"}
     assert 'check=models.Q(partial__in=["S", "C"]))' in errors["partial"].hint
     assert "check=models.Q(missed__in=[1, 2]))" in errors["missed"].hint
     assert (
         'check=models.Q(blank_missed__in=["A", "B", ""])' in errors["blank_missed"].hint
     )
     assert (
-        "check=models.Q(none_missed__in=[1, 2]) | models.Q(none_missed__isnull=True)"
-        in errors["none_missed"].hint
+        'check=models.Q(blank_included__in=["A", "B", ""])'
+        in errors["blank_included"].hint
     )
