@@ -1,2 +1,2 @@
-class NoAST(Exception):
+class MissingASTError(Exception):
     pass
