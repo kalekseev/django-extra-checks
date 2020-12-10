@@ -8,7 +8,7 @@ from django.db import models
 
 from .. import CheckId
 from ..ast import FieldAST
-from ..exceptions import NoAST
+from ..exceptions import MissingASTError
 from ..forms import BaseCheckForm
 from ..registry import registry
 from .base_checks import BaseCheck, BaseCheckMixin
@@ -30,7 +30,7 @@ class CheckModelField(BaseCheck):
     ) -> Iterator[django.core.checks.CheckMessage]:
         try:
             yield from super().__call__(obj, **kwargs)
-        except NoAST:
+        except MissingASTError:
             pass
 
     def is_ignored(self, obj: Any) -> bool:

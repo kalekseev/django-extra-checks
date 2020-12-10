@@ -18,7 +18,7 @@ from typing import (
 from django.db import models
 from django.utils.functional import cached_property
 
-from .exceptions import NoAST
+from .exceptions import MissingASTError
 
 
 class ModelAST:
@@ -109,7 +109,7 @@ class LazyFieldAST:
             try:
                 self.field_ast = FieldAST(self.model_ast.assignments[self.field_name])
             except KeyError:
-                raise NoAST()
+                raise MissingASTError()
         return getattr(self.field_ast, name)
 
 
