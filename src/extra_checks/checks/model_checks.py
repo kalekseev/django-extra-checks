@@ -10,7 +10,7 @@ from django.db import models
 from django.db.models.options import DEFAULT_NAMES as META_ATTRS
 
 from .. import CheckId
-from ..ast import FieldAST, ModelAST
+from ..ast import ModelAST
 from ..forms import AttrsForm, BaseCheckForm
 from ..registry import ChecksConfig, registry
 from .base_checks import BaseCheck
@@ -58,11 +58,9 @@ def check_models(
         for check in model_checks:
             yield from check(model, model_ast=model_ast)
         if field_checks:
-            for field, node in model_ast.field_nodes:
-                if isinstance(field, models.fields.Field):
-                    field_ast = FieldAST(node)
-                    for check in field_checks:
-                        yield from check(field, field_ast=field_ast, model=model)
+            for field, field_ast in model_ast.field_nodes:
+                for check in field_checks:
+                    yield from check(field, field_ast=field_ast, model=model)
 
 
 class CheckModel(BaseCheck):
