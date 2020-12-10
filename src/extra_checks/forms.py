@@ -105,6 +105,10 @@ class DictField(forms.ChoiceField):
 
 class ConfigForm(forms.Form):
     include_apps = ListField(forms.CharField(), required=False)
+    level = forms.ChoiceField(
+        choices=[(c, c) for c in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]],
+        required=False,
+    )
     checks = ListField(
         UnionField(
             {
@@ -142,6 +146,10 @@ class ConfigForm(forms.Form):
             and "include_apps" not in self.data
         ):
             del self.cleaned_data["include_apps"]
+        if "level" in self.cleaned_data and "checks" in self.cleaned_data:
+            for check in self.cleaned_data["checks"].values():
+                check.setdefault("level", self.cleaned_data["level"])
+            del self.cleaned_data["level"]
         return self.cleaned_data
 
     def is_valid(self, check_forms: typing.Dict[CheckId, "typing.Type[BaseCheckForm]"]) -> bool:  # type: ignore

@@ -2,6 +2,7 @@ import ast
 import inspect
 import textwrap
 from typing import (
+    Any,
     Callable,
     Dict,
     Iterable,
@@ -74,12 +75,13 @@ class ModelAST:
         return data
 
     @cached_property
-    def field_nodes(self) -> Iterable[Tuple[models.fields.Field, ast.Assign]]:
+    def field_nodes(self) -> Iterable[Tuple[models.fields.Field, "FieldAST"]]:
         for field in self.model_cls._meta.get_fields(include_parents=False):
-            yield field, LazyFieldAST(self, field.name)
+            if isinstance(field, models.Field):
+                yield field, cast(FieldAST, LazyFieldAST(self, field.name))
 
     @cached_property
-    def assignments(self):
+    def assignments(self) -> Dict[str, ast.Assign]:
         self._parse()
         result = {}
         for node in self._assignments:
@@ -97,12 +99,12 @@ class _AssignType(ast.Assign):
 
 
 class LazyFieldAST:
-    def __init__(self, model_ast, field_name):
+    def __init__(self, model_ast: ModelAST, field_name: str) -> None:
         self.model_ast = model_ast
         self.field_name = field_name
-        self.field_ast = None
+        self.field_ast: Optional[FieldAST] = None
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         if not self.field_ast:
             try:
                 self.field_ast = FieldAST(self.model_ast.assignments[self.field_name])
