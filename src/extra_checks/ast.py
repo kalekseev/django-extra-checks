@@ -14,9 +14,10 @@ from typing import (
     cast,
 )
 
-from django.core.exceptions import FieldDoesNotExist
 from django.db import models
 from django.utils.functional import cached_property
+
+from .exceptions import NoAST
 
 
 class ModelAST:
@@ -74,16 +75,17 @@ class ModelAST:
 
     @cached_property
     def field_nodes(self) -> Iterable[Tuple[models.fields.Field, ast.Assign]]:
+        for field in self.model_cls._meta.get_fields(include_parents=False):
+            yield field, LazyFieldAST(self, field.name)
+
+    @cached_property
+    def assignments(self):
         self._parse()
+        result = {}
         for node in self._assignments:
             if isinstance(node.targets[0], ast.Name):
-                field_name = node.targets[0].id
-                try:
-                    field = self.model_cls._meta.get_field(field_name)
-                except FieldDoesNotExist:
-                    pass
-                else:
-                    yield field, node
+                result[node.targets[0].id] = node
+        return result
 
 
 class _CallType(ast.Call):
@@ -92,6 +94,21 @@ class _CallType(ast.Call):
 
 class _AssignType(ast.Assign):
     value: _CallType
+
+
+class LazyFieldAST:
+    def __init__(self, model_ast, field_name):
+        self.model_ast = model_ast
+        self.field_name = field_name
+        self.field_ast = None
+
+    def __getattr__(self, name):
+        if not self.field_ast:
+            try:
+                self.field_ast = FieldAST(self.model_ast.assignments[self.field_name])
+            except KeyError:
+                raise NoAST()
+        return getattr(self.field_ast, name)
 
 
 class FieldAST:

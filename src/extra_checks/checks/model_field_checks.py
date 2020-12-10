@@ -8,6 +8,7 @@ from django.db import models
 
 from .. import CheckId
 from ..ast import FieldAST
+from ..exceptions import NoAST
 from ..forms import BaseCheckForm
 from ..registry import registry
 from .base_checks import BaseCheck, BaseCheckMixin
@@ -23,6 +24,14 @@ class CheckModelField(BaseCheck):
         model: Type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
         raise NotImplementedError()
+
+    def __call__(
+        self, obj: Any, **kwargs: Any
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        try:
+            yield from super().__call__(obj, **kwargs)
+        except NoAST:
+            pass
 
     def is_ignored(self, obj: Any) -> bool:
         return obj.model in self.ignore_objects or type(obj) in self.ignore_types
