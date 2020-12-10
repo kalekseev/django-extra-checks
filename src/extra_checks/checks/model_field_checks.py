@@ -1,6 +1,5 @@
-import ast
 from abc import abstractmethod
-from typing import Any, Iterator, Type, Union
+from typing import Any, Iterator, Type
 
 import django.core.checks
 from django import forms
@@ -47,29 +46,6 @@ class GetTextMixin(BaseCheckMixin):
         self.gettext_func = gettext_func or "_"
         super().__init__(**kwargs)
 
-    def _is_gettext_node(self, node: ast.AST) -> bool:
-        return (
-            isinstance(node, ast.Call)
-            and getattr(node.func, "id", None) == self.gettext_func
-        )
-
-
-def get_verbose_name(
-    field: models.fields.Field, field_ast: FieldAST
-) -> Union[None, ast.Constant, ast.Call]:
-    result = field_ast.verbose_name
-    if result:
-        return result
-    if isinstance(field, models.fields.related.RelatedField):
-        return None
-    if field_ast.args:
-        node = field_ast.args[0]
-        if isinstance(node, ast.Call) and hasattr(node.func, "id"):
-            return node
-        elif isinstance(node, (ast.Constant, ast.Str)):
-            return node
-    return None
-
 
 @registry.register(django.core.checks.Tags.models)
 class CheckFieldVerboseName(CheckModelField):
@@ -78,8 +54,7 @@ class CheckFieldVerboseName(CheckModelField):
     def apply(
         self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        verbose_name = get_verbose_name(field, field_ast)
-        if not verbose_name:
+        if not field_ast.verbose_name:
             yield self.message(
                 "Field has no verbose name.",
                 hint="Set verbose name on the field.",
@@ -94,8 +69,10 @@ class CheckFieldVerboseNameGettext(GetTextMixin, CheckModelField):
     def apply(
         self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        verbose_name = get_verbose_name(field, field_ast)
-        if verbose_name and not self._is_gettext_node(verbose_name):
+        verbose_name = field_ast.verbose_name
+        if verbose_name and not field_ast.is_gettext_node(
+            verbose_name, self.gettext_func
+        ):
             yield self.message(
                 "Verbose name should use gettext.",
                 hint="Use gettext on the verbose name.",
@@ -110,8 +87,8 @@ class CheckFieldVerboseNameGettextCase(GetTextMixin, CheckModelField):
     def apply(
         self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        verbose_name = get_verbose_name(field, field_ast)
-        if verbose_name and self._is_gettext_node(verbose_name):
+        verbose_name = field_ast.verbose_name
+        if verbose_name and field_ast.is_gettext_node(verbose_name, self.gettext_func):
             value = verbose_name.args[0].s  # type: ignore
             if not all(
                 w.islower() or w.isupper() or w.isdigit() for w in value.split(" ")
@@ -130,7 +107,9 @@ class CheckFieldHelpTextGettext(GetTextMixin, CheckModelField):
     def apply(
         self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if field_ast.help_text and not self._is_gettext_node(field_ast.help_text):
+        if field_ast.help_text and not field_ast.is_gettext_node(
+            field_ast.help_text, self.gettext_func
+        ):
             yield self.message(
                 "Help text should use gettext.",
                 hint="Use gettext on the help text.",
@@ -193,7 +172,7 @@ class CheckFieldNullFalse(CheckModelField):
     def apply(
         self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if field.null is False and "null" in field_ast.kwargs:
+        if field.null is False and field_ast.has_kwarg("null"):
             yield self.message(
                 "Argument `null=False` is default.",
                 hint="Remove `null=False` from field arguments.",
@@ -249,7 +228,7 @@ class CheckFieldForeignKeyIndex(CheckModelField):
         model: Type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, models.fields.related.RelatedField):
-            if field.many_to_one and field_ast.kwargs.get("db_index") is None:
+            if field.many_to_one and not field_ast.has_kwarg("db_index"):
                 if self.when == "indexes":
                     if field.name in self.get_fields_with_indexes_in_meta(model):
                         yield self.message(
@@ -272,7 +251,7 @@ class CheckFieldDefaultNull(CheckModelField):
     def apply(
         self, field: models.fields.Field, field_ast: FieldAST, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if field.null and field.default is None and "default" in field_ast.kwargs:
+        if field.null and field.default is None and field_ast.has_kwarg("default"):
             yield self.message(
                 "Argument `default=None` is redundant if `null=True` is set. (see docs about exceptions).",
                 hint="Remove `default=None` from field arguments.",
