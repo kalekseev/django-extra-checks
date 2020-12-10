@@ -2,6 +2,7 @@ import ast
 import inspect
 import textwrap
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -20,20 +21,20 @@ from django.utils.functional import cached_property
 
 from .exceptions import MissingASTError
 
+if TYPE_CHECKING:
+
+    class _CallType(ast.Call):
+        func: Union[ast.Attribute, ast.Name]
+
+    class _AssignType(ast.Assign):
+        value: _CallType
+
 
 class ModelAST:
     def __init__(self, model_cls: Type[models.Model]):
         self.model_cls = model_cls
         self._assignments: List[ast.Assign] = []
         self._meta: Optional[ast.ClassDef] = None
-
-    @property
-    def is_abstract(self) -> bool:
-        return self.model_cls._meta.abstract
-
-    @property
-    def is_proxy(self) -> bool:
-        return self.model_cls._meta.proxy
 
     @cached_property
     def _nodes(self) -> Iterator[ast.AST]:
@@ -57,7 +58,7 @@ class ModelAST:
         return
 
     @cached_property
-    def meta_node(self) -> Optional[ast.ClassDef]:
+    def _meta_node(self) -> Optional[ast.ClassDef]:
         if not self._meta:
             self._parse(
                 lambda node: isinstance(node, ast.ClassDef) and node.name == "Meta"
@@ -67,9 +68,9 @@ class ModelAST:
     @cached_property
     def meta_vars(self) -> Dict[str, ast.Assign]:
         data: Dict[str, ast.Assign] = {}
-        if not self.meta_node:
+        if not self._meta_node:
             return data
-        for node in ast.iter_child_nodes(self.meta_node):
+        for node in ast.iter_child_nodes(self._meta_node):
             if isinstance(node, ast.Assign) and isinstance(node.targets[0], ast.Name):
                 data[node.targets[0].id] = node
         return data
@@ -78,7 +79,7 @@ class ModelAST:
     def field_nodes(self) -> Iterable[Tuple[models.fields.Field, "FieldAST"]]:
         for field in self.model_cls._meta.get_fields(include_parents=False):
             if isinstance(field, models.Field):
-                yield field, cast(FieldAST, LazyFieldAST(self, field.name))
+                yield field, cast(FieldAST, LazyFieldAST(self, field))
 
     @cached_property
     def assignments(self) -> Dict[str, ast.Assign]:
@@ -90,53 +91,62 @@ class ModelAST:
         return result
 
 
-class _CallType(ast.Call):
-    func: Union[ast.Attribute, ast.Name]
-
-
-class _AssignType(ast.Assign):
-    value: _CallType
-
-
 class LazyFieldAST:
-    def __init__(self, model_ast: ModelAST, field_name: str) -> None:
+    def __init__(self, model_ast: ModelAST, field: models.Field) -> None:
         self.model_ast = model_ast
-        self.field_name = field_name
+        self.field = field
         self.field_ast: Optional[FieldAST] = None
 
     def __getattr__(self, name: str) -> Any:
         if not self.field_ast:
             try:
-                self.field_ast = FieldAST(self.model_ast.assignments[self.field_name])
+                self.field_ast = FieldAST(
+                    self.model_ast.assignments[self.field.name], self.field
+                )
             except KeyError:
                 raise MissingASTError()
         return getattr(self.field_ast, name)
 
 
 class FieldAST:
-    def __init__(self, node: ast.Assign):
-        self._node = cast(_AssignType, node)
+    def __init__(self, node: ast.Assign, field: models.Field):
+        self._node = cast("_AssignType", node)
         self._args = self._node.value.args
+        self._field = field
 
     @cached_property
-    def field_class_name(self) -> str:
-        if isinstance(self._node.value.func, ast.Name):
-            return self._node.value.func.id
-        else:
-            return self._node.value.func.attr
-
-    @cached_property
-    def args(self) -> List[ast.expr]:
+    def _args(self) -> List[ast.expr]:
         return self._node.value.args
 
     @cached_property
-    def kwargs(self) -> Dict[str, ast.keyword]:
+    def _kwargs(self) -> Dict[str, ast.keyword]:
         return {kw.arg: kw for kw in self._node.value.keywords if kw.arg}
 
     @cached_property
-    def verbose_name(self) -> Union[None, ast.Constant, ast.Call]:
-        return getattr(self.kwargs.get("verbose_name"), "value", None)
+    def help_text(self) -> Optional[ast.AST]:
+        return getattr(self._kwargs.get("help_text"), "value", None)
 
     @cached_property
-    def help_text(self) -> Optional[ast.AST]:
-        return getattr(self.kwargs.get("help_text"), "value", None)
+    def verbose_name(self) -> Union[None, ast.Constant, ast.Call]:
+        result = getattr(self._kwargs.get("verbose_name"), "value", None)
+        if result:
+            return result
+        if isinstance(self._field, models.fields.related.RelatedField):
+            return None
+        if self._args:
+            node = self._args[0]
+            if isinstance(node, ast.Call) and hasattr(node.func, "id"):
+                return node
+            elif isinstance(node, (ast.Constant, ast.Str)):
+                return node
+        return None
+
+    @staticmethod
+    def is_gettext_node(node: ast.AST, gettext_func: str) -> bool:
+        return (
+            isinstance(node, ast.Call)
+            and getattr(node.func, "id", None) == gettext_func
+        )
+
+    def has_kwarg(self, name):
+        return name in self._kwargs
