@@ -208,14 +208,18 @@ class FieldAST:
                 return node
         return None
 
-    @staticmethod
-    def is_gettext_node(node: ast.AST, gettext_func: str) -> bool:
+    @classmethod
+    def is_gettext_node(cls, node: ast.AST, gettext_func: str) -> bool:
         return (
             isinstance(node, ast.Call)
             and getattr(node.func, "id", None) == gettext_func
         )
 
-    def has_kwarg(self, name):
+    @classmethod
+    def get_call_value(cls, node: ast.Call) -> str:
+        return node.args[0].s  # type: ignore
+
+    def has_kwarg(self, name: str) -> bool:
         return name in self._kwargs
 
 
@@ -256,8 +260,8 @@ class FieldCST:
                 return node.value
         return None
 
-    @staticmethod
-    def is_gettext_node(node: ast.AST, gettext_func: str) -> bool:
+    @classmethod
+    def is_gettext_node(cls, node: ast.AST, gettext_func: str) -> bool:
         return (
             m.matches(node, m.Call())
             and getattr(node.func, "value", None) == gettext_func
@@ -265,3 +269,7 @@ class FieldCST:
 
     def has_kwarg(self, name):
         return name in self._kwargs
+
+    @classmethod
+    def get_call_value(cls, node: ast.Call) -> str:
+        return node.args[0].value.value  # type: ignore
