@@ -89,7 +89,7 @@ class CheckFieldVerboseNameGettextCase(GetTextMixin, CheckModelField):
     ) -> Iterator[django.core.checks.CheckMessage]:
         verbose_name = field_ast.verbose_name
         if verbose_name and field_ast.is_gettext_node(verbose_name, self.gettext_func):
-            value = verbose_name.args[0].s  # type: ignore
+            value = field_ast.get_call_value(verbose_name)  # type: ignore
             if not all(
                 w.islower() or w.isupper() or w.isdigit() for w in value.split(" ")
             ):
