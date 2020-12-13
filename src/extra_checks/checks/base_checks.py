@@ -14,6 +14,13 @@ MESSAGE_MAP = {
 }
 
 
+class ExtraCheckMessage(django.core.checks.CheckMessage):
+    def __init__(self, level, msg, hint=None, obj=None, id=None, file=None, fix=None):
+        super().__init__(level, msg, hint=hint, obj=obj, id=id)
+        self._file = file
+        self._fix = fix
+
+
 class BaseCheck(ABC):
     Id: CheckId
     settings_form_class: ClassVar[Type[forms.BaseCheckForm]] = forms.BaseCheckForm
@@ -39,10 +46,21 @@ class BaseCheck(ABC):
         return obj in self.ignore_objects or type(obj) in self.ignore_types
 
     def message(
-        self, message: str, hint: Optional[str] = None, obj: Any = None
+        self,
+        message: str,
+        hint: Optional[str] = None,
+        obj: Any = None,
+        file: str = None,
+        fix: Any = None,
     ) -> django.core.checks.CheckMessage:
-        return MESSAGE_MAP[self.level](
-            message + f" [{self.Id.value}]", hint=hint, obj=obj, id=self.Id.name
+        return ExtraCheckMessage(
+            self.level,
+            message + f" [{self.Id.value}]",
+            hint=hint,
+            obj=obj,
+            id=self.Id.name,
+            file=file,
+            fix=fix,
         )
 
 

@@ -66,7 +66,7 @@ def check_models(
 class CheckModel(BaseCheck):
     @abstractmethod
     def apply(
-        self, model: Type[models.Model], model_ast: ModelASTProtocol
+        self, model: Type[models.Model], *, model_ast: ModelASTProtocol
     ) -> Iterator[django.core.checks.CheckMessage]:
         raise NotImplementedError()
 
@@ -81,7 +81,7 @@ class CheckModelAttribute(CheckModel):
         super().__init__(**kwargs)
 
     def apply(
-        self, model: Type[models.Model], model_ast: ModelASTProtocol
+        self, model: Type[models.Model], **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         for attr in self.attrs:
             if (
@@ -149,7 +149,7 @@ class CheckModelAdmin(CheckModel):
                     self.models_with_admin.add(inline.model)
 
     def apply(
-        self, model: Type[models.Model], model_ast: ModelASTProtocol
+        self, model: Type[models.Model], **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if model not in self.models_with_admin:
             yield self.message("The model is not registered in admin.", obj=model)

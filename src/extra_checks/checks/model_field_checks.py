@@ -280,8 +280,8 @@ class CheckFieldChoicesConstraint(CheckModelField):
     def apply(
         self,
         field: models.fields.Field,
-        field_ast: FieldASTProtocol,
         model: Type[models.Model],
+        **kwargs: Any,
     ) -> Iterator[django.core.checks.CheckMessage]:
         choices = field.flatchoices  # type: ignore
         if choices:
@@ -289,16 +289,33 @@ class CheckFieldChoicesConstraint(CheckModelField):
             if field.blank and "" not in field_choices:
                 field_choices.append("")
             in_name = f"{field.name}__in"
+            name = f"%(app_label)s_%(class)s_{field.name}_valid"
+            replace = False
             for constraint in model._meta.constraints:
                 if isinstance(constraint, models.CheckConstraint):
+                    if name == constraint.name:
+                        replace = True
                     conditions = dict(constraint.check.children)
                     if in_name in conditions and set(field_choices) == set(
                         conditions[in_name]
                     ):
                         return
             check = f'models.Q({in_name}=[{", ".join([self._repr_choice(c) for c in field_choices])}])'
+            import importlib
+
+            from extra_checks.fixes.fix_choices_constraint import (
+                gen_fix_for_choices_constraint,
+            )
+
             yield self.message(
                 "Field with choices must have companion CheckConstraint to enforce choices on database level.",
-                hint=f'Add to Meta.constraints: `models.CheckConstraint(name="%(app_label)s_%(class)s_{field.name}_valid", check={check})`',
+                hint=f'Add to Meta.constraints: `models.CheckConstraint(name="{name}", check={check})`',
                 obj=field,
+                file=importlib.import_module(model.__module__).__file__,
+                fix=gen_fix_for_choices_constraint(
+                    model.__name__,
+                    f"%(app_label)s_%(class)s_{field.name}_valid",
+                    check=check,
+                    replace=replace,
+                ),
             )
