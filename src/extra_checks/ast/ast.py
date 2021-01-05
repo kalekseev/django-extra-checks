@@ -29,7 +29,7 @@ else:
 class ModelAST(ModelASTProtocol):
     def __init__(self, model_cls: Type[models.Model]):
         self.model_cls = model_cls
-        self._assignments: List[ast.Assign] = []
+        self._assignment_nodes: List[ast.Assign] = []
         self._meta: Optional[ast.ClassDef] = None
 
     @cached_property
@@ -48,7 +48,7 @@ class ModelAST(ModelASTProtocol):
                     self._meta = cast(ast.ClassDef, node)
                     break
                 if isinstance(node, ast.Assign):
-                    self._assignments.append(node)
+                    self._assignment_nodes.append(node)
         except StopIteration:
             return
         return
@@ -72,21 +72,24 @@ class ModelAST(ModelASTProtocol):
         return data
 
     @cached_property
+    def _assignments(self) -> Dict[str, ast.Assign]:
+        self._parse()
+        result = {}
+        for node in self._assignment_nodes:
+            if isinstance(node.targets[0], ast.Name):
+                result[node.targets[0].id] = node
+        return result
+
+    @cached_property
     def field_nodes(self) -> Iterable[Tuple[models.fields.Field, "FieldAST"]]:
         for field in self.model_cls._meta.get_fields(include_parents=False):
             if isinstance(field, models.Field):
                 yield field, cast(
-                    FieldAST, LazyFieldAST(FieldAST, self.assignments, field)
+                    FieldAST, LazyFieldAST(FieldAST, self._assignments, field)
                 )
 
-    @cached_property
-    def assignments(self) -> Dict[str, ast.Assign]:
-        self._parse()
-        result = {}
-        for node in self._assignments:
-            if isinstance(node.targets[0], ast.Name):
-                result[node.targets[0].id] = node
-        return result
+    def has_meta_var(self, name: str) -> bool:
+        return name in self._meta_vars
 
 
 class ArgAST(ArgASTProtocol):
