@@ -1,8 +1,9 @@
-from typing import Any, Dict, Iterable, Optional, Tuple
+import sys
+from typing import Any, Iterable, Optional, Tuple
 
-try:
+if sys.version_info >= (3, 8):
     from typing import Protocol
-except ImportError:
+else:
     from typing_extensions import Protocol
 
 from django.db import models
@@ -32,8 +33,4 @@ class ModelASTProtocol(Protocol):
         ...
 
     def has_meta_var(self, name: str) -> bool:
-        return name in self._meta_vars
-
-    @property
-    def _meta_vars(self) -> Dict[str, Any]:
         ...
