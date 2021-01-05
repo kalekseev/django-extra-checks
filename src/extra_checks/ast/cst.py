@@ -31,7 +31,7 @@ else:
 class ModelCST(ModelASTProtocol):
     def __init__(self, model_cls: Type[models.Model]):
         self.model_cls = model_cls
-        self._assignments: List[cst.Assign] = []
+        self._assignment_nodes: List[cst.Assign] = []
         self._meta: Optional[cst.ClassDef] = None
 
     @cached_property
@@ -60,7 +60,7 @@ class ModelCST(ModelASTProtocol):
                     else None
                 )
                 if assign:
-                    self._assignments.append(assign)
+                    self._assignment_nodes.append(assign)
         except StopIteration:
             return
         return
@@ -100,21 +100,24 @@ class ModelCST(ModelASTProtocol):
         return data
 
     @cached_property
+    def _assignments(self) -> Dict[str, cst.Assign]:
+        self._parse()
+        result = {}
+        for node in self._assignment_nodes:
+            if m.matches(node.targets[0].target, m.Name()):
+                result[cst.ensure_type(node.targets[0].target, cst.Name).value] = node
+        return result
+
+    @cached_property
     def field_nodes(self) -> Iterable[Tuple[models.fields.Field, "FieldCST"]]:
         for field in self.model_cls._meta.get_fields(include_parents=False):
             if isinstance(field, models.Field):
                 yield field, cast(
-                    FieldCST, LazyFieldAST(FieldCST, self.assignments, field)
+                    FieldCST, LazyFieldAST(FieldCST, self._assignments, field)
                 )
 
-    @cached_property
-    def assignments(self) -> Dict[str, cst.Assign]:
-        self._parse()
-        result = {}
-        for node in self._assignments:
-            if m.matches(node.targets[0].target, m.Name()):
-                result[cst.ensure_type(node.targets[0].target, cst.Name).value] = node
-        return result
+    def has_meta_var(self, name: str) -> bool:
+        return name in self._meta_vars
 
 
 class FieldCST(FieldASTProtocol):
