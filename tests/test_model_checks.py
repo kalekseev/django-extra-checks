@@ -4,6 +4,7 @@ from extra_checks.checks import model_checks
 from tests.example.models import (
     Article,
     Author,
+    IgnoreMissingSiteAttribute,
     ModelFieldForeignKeyIndex,
     ModelFieldTextNull,
 )
@@ -107,3 +108,19 @@ def test_no_index_together(test_case):
     )
     assert len(messages) == 1
     assert messages[0].id == model_checks.CheckNoIndexTogether.Id.name
+
+
+def test_ignore_model_check(test_case):
+    messages = (
+        test_case.models(IgnoreMissingSiteAttribute)
+        .settings(
+            {
+                "checks": [
+                    {"id": model_checks.CheckModelAttribute.Id.value, "attrs": ["site"]}
+                ]
+            }
+        )
+        .check(model_checks.CheckModelAttribute)
+        .run()
+    )
+    assert not messages

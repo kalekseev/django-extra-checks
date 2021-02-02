@@ -90,16 +90,16 @@ def check_drf_serializers(
     s_classes, m_classes = _get_serializers_to_check(config.include_apps)
     for s in s_classes:
         for check in serializer_checks:
-            yield from check(s)
+            yield from check(s, None)
     for s in m_classes:
         for check in model_serializer_checks:
-            yield from check(s)
+            yield from check(s, None)
 
 
 class CheckDRFSerializer(BaseCheck):
     @abstractmethod
     def apply(
-        self, serializer: Serializer
+        self, serializer: Serializer, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         raise NotImplementedError()
 
@@ -107,7 +107,7 @@ class CheckDRFSerializer(BaseCheck):
 class CheckDRFModelSerializer(BaseCheck):
     @abstractmethod
     def apply(
-        self, serializer: ModelSerializer
+        self, serializer: ModelSerializer, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         raise NotImplementedError()
 
@@ -118,7 +118,7 @@ class CheckDRFSerializerExtraKwargs(CheckDRFModelSerializer):
     level = django.core.checks.ERROR
 
     def apply(
-        self, serializer: ModelSerializer
+        self, serializer: ModelSerializer, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if not hasattr(serializer, "Meta") or not hasattr(
             serializer.Meta, "extra_kwargs"
@@ -143,7 +143,7 @@ class CheckDRFSerializerMetaAttribute(CheckDRFModelSerializer):
         super().__init__(**kwargs)
 
     def apply(
-        self, serializer: ModelSerializer
+        self, serializer: ModelSerializer, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         meta = getattr(serializer, "Meta", None)
         for attr in self.attrs:

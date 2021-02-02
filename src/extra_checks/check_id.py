@@ -1,4 +1,5 @@
 import enum
+from typing import Any, Optional
 
 
 class CheckId(str, enum.Enum):
@@ -21,3 +22,20 @@ class CheckId(str, enum.Enum):
     X060 = "field-choices-constraint"
     X301 = "drf-model-serializer-extra-kwargs"
     X302 = "drf-model-serializer-meta-attribute"
+
+    @classmethod
+    def find_check(cls, value: Any) -> Optional["CheckId"]:
+        if isinstance(value, CheckId):
+            return value
+        try:
+            return cls(value)
+        except ValueError:
+            pass
+        try:
+            return cls._member_map_[value]  # type: ignore
+        except KeyError:
+            pass
+        return None
+
+
+ALL_CHECK_IDS = frozenset(CheckId._member_names_)

@@ -1,3 +1,4 @@
+import warnings
 from functools import partial
 from typing import (
     TYPE_CHECKING,
@@ -59,20 +60,6 @@ class ChecksConfig:
         return cls(ignored_objects=ignored, **form.cleaned_data)
 
     @staticmethod
-    def _check_id(value: object) -> Optional["CheckId"]:
-        if isinstance(value, CheckId):
-            return value
-        try:
-            return CheckId(value)
-        except ValueError:
-            pass
-        try:
-            return getattr(CheckId, value)  # type: ignore
-        except (TypeError, AttributeError):
-            pass
-        return None
-
-    @staticmethod
     def _build_ignored(
         ignore_checks: Dict[Any, Set[Union[str, CheckId]]]
     ) -> Tuple[Dict[CheckId, Set[Any]], List[str]]:
@@ -80,7 +67,7 @@ class ChecksConfig:
         ignored: Dict[CheckId, set] = {}
         for obj, ids in ignore_checks.items():
             for id_ in ids:
-                check_id = ChecksConfig._check_id(id_)
+                check_id = CheckId.find_check(id_)
                 if check_id:
                     ignored.setdefault(check_id, set()).add(obj)
                 else:
@@ -155,6 +142,12 @@ class Registry:
         return True if self._config is None else not self._config.errors
 
     def ignore_checks(self, *args: Union[CheckId, str]) -> Callable[[Any], Any]:
+        checks = ", ".join([c.value if isinstance(c, CheckId) else c for c in args])
+        warnings.warn(
+            f'@ignore_checks is deprecated and will be removed in version 0.10.0, replace it with comment "# extra-checks-disable-next-line {checks}"',
+            DeprecationWarning,
+        )
+
         def f(entity: Any) -> Any:
             self.ignored_checks[entity] = set(args)
             return entity

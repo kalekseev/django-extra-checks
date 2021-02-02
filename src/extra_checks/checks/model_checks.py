@@ -56,17 +56,17 @@ def check_models(
     ):
         model_ast = get_model_ast(model)
         for check in model_checks:
-            yield from check(model, model_ast=model_ast)
+            yield from check(model, ast=model_ast)
         if field_checks:
             for field, field_ast in model_ast.field_nodes:
                 for check in field_checks:
-                    yield from check(field, field_ast=field_ast, model=model)
+                    yield from check(field, ast=field_ast, model=model)
 
 
 class CheckModel(BaseCheck):
     @abstractmethod
     def apply(
-        self, model: Type[models.Model], model_ast: ModelASTProtocol
+        self, model: Type[models.Model], ast: ModelASTProtocol
     ) -> Iterator[django.core.checks.CheckMessage]:
         raise NotImplementedError()
 
@@ -81,7 +81,7 @@ class CheckModelAttribute(CheckModel):
         super().__init__(**kwargs)
 
     def apply(
-        self, model: Type[models.Model], model_ast: ModelASTProtocol
+        self, model: Type[models.Model], ast: ModelASTProtocol
     ) -> Iterator[django.core.checks.CheckMessage]:
         for attr in self.attrs:
             if (
@@ -110,13 +110,13 @@ class CheckModelMetaAttribute(CheckModel):
         super().__init__(**kwargs)
 
     def apply(
-        self, model: Type[models.Model], model_ast: ModelASTProtocol
+        self, model: Type[models.Model], ast: ModelASTProtocol
     ) -> Iterator[django.core.checks.CheckMessage]:
         for attr in self.attrs:
             if (
                 not model._meta.abstract
                 and not model._meta.proxy
-                and not model_ast.has_meta_var(attr)
+                and not ast.has_meta_var(attr)
             ):
                 yield self.message(
                     f'Each model must specify "{attr}" attribute in its Meta.',
@@ -149,7 +149,7 @@ class CheckModelAdmin(CheckModel):
                     self.models_with_admin.add(inline.model)
 
     def apply(
-        self, model: Type[models.Model], model_ast: ModelASTProtocol
+        self, model: Type[models.Model], ast: ModelASTProtocol
     ) -> Iterator[django.core.checks.CheckMessage]:
         if model not in self.models_with_admin:
             yield self.message("The model is not registered in admin.", obj=model)
@@ -160,9 +160,9 @@ class CheckNoUniqueTogether(CheckModel):
     Id = CheckId.X013
 
     def apply(
-        self, model: Type[models.Model], model_ast: ModelASTProtocol
+        self, model: Type[models.Model], ast: ModelASTProtocol
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if model_ast.has_meta_var("unique_together"):
+        if ast.has_meta_var("unique_together"):
             yield self.message(
                 "Use UniqueConstraint with the constraints option instead.",
                 obj=model,
@@ -174,7 +174,7 @@ class CheckNoIndexTogether(CheckModel):
     Id = CheckId.X014
 
     def apply(
-        self, model: Type[models.Model], model_ast: ModelASTProtocol
+        self, model: Type[models.Model], ast: ModelASTProtocol
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if model_ast.has_meta_var("index_together"):
+        if ast.has_meta_var("index_together"):
             yield self.message("Use the indexes option instead", obj=model)

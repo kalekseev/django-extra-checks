@@ -29,8 +29,27 @@ class FieldASTProtocol(Protocol):
 
 class ModelASTProtocol(Protocol):
     @property
-    def field_nodes(self) -> Iterable[Tuple[models.fields.Field, FieldASTProtocol]]:
+    def field_nodes(
+        self,
+    ) -> Iterable[Tuple[models.fields.Field, "FieldASTDisableCommentProtocol"]]:
         ...
 
     def has_meta_var(self, name: str) -> bool:
         ...
+
+
+class DisableCommentProtocol(Protocol):
+    def is_disabled_by_comment(self, check_id: str) -> bool:
+        ...
+
+
+class ModelASTDisableCommentProtocol(
+    ModelASTProtocol, DisableCommentProtocol, Protocol
+):
+    ...
+
+
+class FieldASTDisableCommentProtocol(
+    FieldASTProtocol, DisableCommentProtocol, Protocol
+):
+    ...

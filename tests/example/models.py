@@ -183,3 +183,8 @@ class ChoicesConstraint(models.Model):
                 name="grouped_valid", check=models.Q(grouped__in=(1, 2, 3))
             ),
         ]
+
+
+# extra-checks-disable-next-line model-attribute
+class IgnoreMissingSiteAttribute(models.Model):
+    not_site = models.ForeignKey(Site, verbose_name="site", on_delete=models.CASCADE)

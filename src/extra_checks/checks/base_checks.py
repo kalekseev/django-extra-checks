@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Iterator, Optional, Set, Type
 import django.core.checks
 
 from .. import CheckId, forms
+from ..ast.protocols import DisableCommentProtocol
 
 MESSAGE_MAP = {
     django.core.checks.DEBUG: django.core.checks.Debug,
@@ -30,10 +31,12 @@ class BaseCheck(ABC):
         self.ignore_types = ignore_types or set()
 
     def __call__(
-        self, obj: Any, **kwargs: Any
+        self, obj: Any, ast: Optional[DisableCommentProtocol] = None, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if not self.is_ignored(obj):
-            yield from self.apply(obj, **kwargs)  # type: ignore
+            for error in self.apply(obj, ast=ast, **kwargs):  # type: ignore
+                if not ast or not ast.is_disabled_by_comment(error.id):
+                    yield error
 
     def is_ignored(self, obj: Any) -> bool:
         return obj in self.ignore_objects or type(obj) in self.ignore_types
