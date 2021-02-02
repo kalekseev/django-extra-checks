@@ -50,7 +50,7 @@ class ChecksConfig:
         check_forms = {r.Id: r.settings_form_class for r in include_checks}
         if not hasattr(settings, "EXTRA_CHECKS"):
             return cls()
-        form = ConfigForm(settings.EXTRA_CHECKS)
+        form = ConfigForm(settings.EXTRA_CHECKS)  # type: ignore
         if not form.is_valid(check_forms):
             return cls(errors=form.errors)
         ignored, errors = ChecksConfig._build_ignored(ignore_checks or {})
