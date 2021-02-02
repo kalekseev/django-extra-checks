@@ -1,15 +1,20 @@
-from typing import Type, Union
+from typing import Type
 
 from django.db import models
 
 from .ast import ModelAST
 from .exceptions import MissingASTError
-from .protocols import ArgASTProtocol, FieldASTProtocol, ModelASTProtocol
+from .protocols import (
+    ArgASTProtocol,
+    FieldASTProtocol,
+    ModelASTDisableCommentProtocol,
+    ModelASTProtocol,
+)
 
 
 def get_model_ast(
     model_cls: Type[models.Model],
-) -> Union[ModelASTProtocol]:
+) -> ModelASTDisableCommentProtocol:
     return ModelAST(model_cls)
 
 

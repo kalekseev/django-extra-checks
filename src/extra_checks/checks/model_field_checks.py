@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Iterator, Type
+from typing import Any, Iterator, Optional, Type
 
 import django.core.checks
 from django import forms
@@ -7,6 +7,7 @@ from django.db import models
 
 from .. import CheckId
 from ..ast import FieldASTProtocol, MissingASTError
+from ..ast.protocols import DisableCommentProtocol
 from ..forms import BaseCheckForm
 from ..registry import registry
 from .base_checks import BaseCheck, BaseCheckMixin
@@ -18,16 +19,16 @@ class CheckModelField(BaseCheck):
         self,
         field: models.fields.Field,
         *,
-        field_ast: FieldASTProtocol,
+        ast: FieldASTProtocol,
         model: Type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
         raise NotImplementedError()
 
     def __call__(
-        self, obj: Any, **kwargs: Any
+        self, obj: Any, ast: Optional[DisableCommentProtocol] = None, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         try:
-            yield from super().__call__(obj, **kwargs)
+            yield from super().__call__(obj, ast=ast, **kwargs)
         except MissingASTError:
             pass
 
@@ -51,9 +52,9 @@ class CheckFieldVerboseName(CheckModelField):
     Id = CheckId.X050
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldASTProtocol, **kwargs: Any
+        self, field: models.fields.Field, ast: FieldASTProtocol, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if not field_ast.get_arg("verbose_name"):
+        if not ast.get_arg("verbose_name"):
             yield self.message(
                 "Field has no verbose name.",
                 hint="Set verbose name on the field.",
@@ -66,9 +67,9 @@ class CheckFieldVerboseNameGettext(GetTextMixin, CheckModelField):
     Id = CheckId.X051
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldASTProtocol, **kwargs: Any
+        self, field: models.fields.Field, ast: FieldASTProtocol, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        verbose_name = field_ast.get_arg("verbose_name")
+        verbose_name = ast.get_arg("verbose_name")
         if verbose_name and not (
             verbose_name.is_callable
             and verbose_name.callable_func_name == self.gettext_func
@@ -85,9 +86,9 @@ class CheckFieldVerboseNameGettextCase(GetTextMixin, CheckModelField):
     Id = CheckId.X052
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldASTProtocol, **kwargs: Any
+        self, field: models.fields.Field, ast: FieldASTProtocol, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        verbose_name = field_ast.get_arg("verbose_name")
+        verbose_name = ast.get_arg("verbose_name")
         if verbose_name and (
             verbose_name.is_callable
             and verbose_name.callable_func_name == self.gettext_func
@@ -112,9 +113,9 @@ class CheckFieldHelpTextGettext(GetTextMixin, CheckModelField):
     Id = CheckId.X053
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldASTProtocol, **kwargs: Any
+        self, field: models.fields.Field, ast: FieldASTProtocol, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        help_text = field_ast.get_arg("help_text")
+        help_text = ast.get_arg("help_text")
         if help_text and not (
             help_text.is_callable and help_text.callable_func_name == self.gettext_func
         ):
@@ -178,9 +179,9 @@ class CheckFieldNullFalse(CheckModelField):
     Id = CheckId.X057
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldASTProtocol, **kwargs: Any
+        self, field: models.fields.Field, ast: FieldASTProtocol, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if field.null is False and field_ast.get_arg("null"):
+        if field.null is False and ast.get_arg("null"):
             yield self.message(
                 "Argument `null=False` is default.",
                 hint="Remove `null=False` from field arguments.",
@@ -232,11 +233,11 @@ class CheckFieldForeignKeyIndex(CheckModelField):
     def apply(
         self,
         field: models.fields.Field,
-        field_ast: FieldASTProtocol,
+        ast: FieldASTProtocol,
         model: Type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, models.fields.related.RelatedField):
-            if field.many_to_one and not field_ast.get_arg("db_index"):
+            if field.many_to_one and not ast.get_arg("db_index"):
                 if self.when == "indexes":
                     if field.name in self.get_fields_with_indexes_in_meta(model):
                         yield self.message(
@@ -257,9 +258,9 @@ class CheckFieldDefaultNull(CheckModelField):
     Id = CheckId.X059
 
     def apply(
-        self, field: models.fields.Field, field_ast: FieldASTProtocol, **kwargs: Any
+        self, field: models.fields.Field, ast: FieldASTProtocol, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if field.null and field.default is None and field_ast.get_arg("default"):
+        if field.null and field.default is None and ast.get_arg("default"):
             yield self.message(
                 "Argument `default=None` is redundant if `null=True` is set. (see docs about exceptions).",
                 hint="Remove `default=None` from field arguments.",
@@ -280,7 +281,7 @@ class CheckFieldChoicesConstraint(CheckModelField):
     def apply(
         self,
         field: models.fields.Field,
-        field_ast: FieldASTProtocol,
+        ast: FieldASTProtocol,
         model: Type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
         choices = field.flatchoices  # type: ignore

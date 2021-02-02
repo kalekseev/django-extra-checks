@@ -15,7 +15,7 @@ def check_extra_checks_health(
     **kwargs: Any,
 ) -> Iterator[django.core.checks.CheckMessage]:
     for check in checks:
-        yield from check(config)
+        yield from check(config, None)
 
 
 def dict_to_text(data: dict, indent_level: int = 0) -> str:

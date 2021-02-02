@@ -1,6 +1,4 @@
 import ast
-import inspect
-import textwrap
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -16,9 +14,18 @@ from typing import (
 )
 
 from django.db import models
+from django.utils.functional import SimpleLazyObject
 
-from .lazy import LazyFieldAST
-from .protocols import ArgASTProtocol, FieldASTProtocol, ModelASTProtocol
+from extra_checks.check_id import CheckId
+
+from .exceptions import MissingASTError
+from .protocols import (
+    ArgASTProtocol,
+    DisableCommentProtocol,
+    FieldASTProtocol,
+    ModelASTProtocol,
+)
+from .source_provider import SourceProvider
 
 if TYPE_CHECKING:
     cached_property = property
@@ -26,20 +33,21 @@ else:
     from django.utils.functional import cached_property
 
 
-class ModelAST(ModelASTProtocol):
+class ModelAST(DisableCommentProtocol, ModelASTProtocol):
     def __init__(self, model_cls: Type[models.Model]):
         self.model_cls = model_cls
         self._assignment_nodes: List[ast.Assign] = []
         self._meta: Optional[ast.ClassDef] = None
 
     @cached_property
+    def _source_provider(self) -> SourceProvider:
+        return SourceProvider(self.model_cls)
+
+    @cached_property
     def _nodes(self) -> Iterator[ast.AST]:
-        try:
-            source = textwrap.dedent(inspect.getsource(self.model_cls))
-        except TypeError:
-            # TODO: add warning?
+        if self._source_provider.source is None:
             return iter([])
-        return iter(ast.parse(source).body[0].body)  # type: ignore
+        return iter(ast.parse(self._source_provider.source).body[0].body)  # type: ignore
 
     def _parse(self, predicate: Optional[Callable[[ast.AST], bool]] = None) -> None:
         try:
@@ -85,11 +93,25 @@ class ModelAST(ModelASTProtocol):
         for field in self.model_cls._meta.get_fields(include_parents=False):
             if isinstance(field, models.Field):
                 yield field, cast(
-                    FieldAST, LazyFieldAST(FieldAST, self._assignments, field)
+                    FieldAST, SimpleLazyObject(lambda: get_field_ast(self, field))  # type: ignore
                 )
 
     def has_meta_var(self, name: str) -> bool:
         return name in self._meta_vars
+
+    def is_disabled_by_comment(self, check_id: str) -> bool:
+        return CheckId.find_check(
+            check_id
+        ) in self._source_provider.get_disabled_checks_for_line(1)
+
+
+def get_field_ast(model_ast: ModelAST, field: models.Field) -> "FieldAST":
+    try:
+        return FieldAST(
+            model_ast._assignments[field.name], field, model_ast._source_provider
+        )
+    except KeyError:
+        raise MissingASTError()
 
 
 class ArgAST(ArgASTProtocol):
@@ -112,10 +134,13 @@ class ArgAST(ArgASTProtocol):
         return self._node.args[0].s  # type: ignore
 
 
-class FieldAST(FieldASTProtocol):
-    def __init__(self, node: ast.Assign, field: models.Field):
+class FieldAST(DisableCommentProtocol, FieldASTProtocol):
+    def __init__(
+        self, node: ast.Assign, field: models.Field, source_provider: SourceProvider
+    ):
         self._node = node
         self._field = field
+        self._source_provider = source_provider
 
     @cached_property
     def _args(self) -> List[ast.expr]:
@@ -144,3 +169,8 @@ class FieldAST(FieldASTProtocol):
             elif isinstance(node, (ast.Constant, ast.Str)):
                 return node
         return None
+
+    def is_disabled_by_comment(self, check_id: str) -> bool:
+        return CheckId.find_check(
+            check_id
+        ) in self._source_provider.get_disabled_checks_for_line(self._node.lineno)
