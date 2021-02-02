@@ -1,12 +1,9 @@
-import inspect
-import textwrap
+import functools
+import operator
 from typing import (
     TYPE_CHECKING,
-    Callable,
     Dict,
     Iterable,
-    Iterator,
-    List,
     Optional,
     Sequence,
     Tuple,
@@ -28,85 +25,57 @@ else:
     from django.utils.functional import cached_property
 
 
+def parse_file(file, model_names):
+    _names = [name for name in model_names]
+    names = functools.reduce(operator.or_, [m.Name(name) for name in model_names])
+
+    class Collector(m.MatcherDecoratableVisitor):
+        def __init__(self):
+            self.models = {}
+            self.current = None
+            super().__init__()
+
+        def visit_FunctionDef(self, node: cst.FunctionDef):
+            return False
+
+        @m.visit(m.ClassDef(names))
+        def visit_model(self, node: cst.ClassDef):
+            if node.name.value not in self.models:
+                self.models[node.name.value] = {"assignments": {}, "meta_vars": {}}
+            self.current = self.models[node.name.value]
+            return True
+
+        @m.leave(m.ClassDef(names))
+        def leave_model(self, node: cst.ClassDef):
+            self.current = None
+
+        @m.call_if_inside(m.ClassDef(names))
+        def visit_ClassDef(self, node: cst.FunctionDef):
+            return node.name.value in {*_names, "Meta"}
+
+        @m.call_if_inside(m.ClassDef(names))
+        @m.call_if_not_inside(m.ClassDef(m.Name("Meta")))
+        @m.visit(m.Assign(value=m.Call()))
+        def fields(self, node: cst.Assign):
+            self.current["assignments"][node.targets[0].target.value] = node
+
+        @m.call_if_inside(m.ClassDef(names))
+        @m.call_if_inside(m.ClassDef(m.Name("Meta")))
+        @m.visit(m.Assign())
+        def meta_vars(self, node: cst.Assign):
+            self.current["meta_vars"][node.targets[0].target.value] = node
+
+    visitor = Collector()
+    tree = cst.parse_module(open(file).read())
+    tree.visit(visitor)
+    return visitor
+
+
 class ModelCST(ModelASTProtocol):
-    def __init__(self, model_cls: Type[models.Model]):
+    def __init__(self, model_cls: Type[models.Model], assignments, meta_vars):
         self.model_cls = model_cls
-        self._assignment_nodes: List[cst.Assign] = []
-        self._meta: Optional[cst.ClassDef] = None
-
-    @cached_property
-    def _nodes(self) -> Iterator[cst.CSTNode]:
-        try:
-            source = textwrap.dedent(inspect.getsource(self.model_cls))
-        except TypeError:
-            # TODO: add warning?
-            return iter([])
-        return iter(cst.parse_statement(source).body.body)  # type: ignore
-
-    def _parse(self, predicate: Optional[Callable[[cst.CSTNode], bool]] = None) -> None:
-        try:
-            for node in self._nodes:
-                if predicate and predicate(node):
-                    self._meta = cast(cst.ClassDef, node)
-                    break
-                line = (
-                    cst.ensure_type(node, cst.SimpleStatementLine)
-                    if m.matches(node, m.SimpleStatementLine())
-                    else None
-                )
-                assign = (
-                    cst.ensure_type(line.body[0], cst.Assign)
-                    if line and m.matches(line.body[0], m.Assign())
-                    else None
-                )
-                if assign:
-                    self._assignment_nodes.append(assign)
-        except StopIteration:
-            return
-        return
-
-    @cached_property
-    def _meta_node(self) -> Optional[cst.ClassDef]:
-        if not self._meta:
-            self._parse(
-                lambda node: m.matches(node, m.ClassDef())
-                and cst.ensure_type(node, cst.ClassDef).name.value == "Meta"
-            )
-        return self._meta
-
-    @cached_property
-    def _meta_vars(self) -> Dict[str, cst.Assign]:
-        data: Dict[str, cst.Assign] = {}
-        if not self._meta_node:
-            return data
-        for node in self._meta_node.body.body:
-            line = (
-                cst.ensure_type(node, cst.SimpleStatementLine)
-                if m.matches(node, m.SimpleStatementLine())
-                else None
-            )
-            assign = (
-                cst.ensure_type(line.body[0], cst.Assign)
-                if line and m.matches(line.body[0], m.Assign())
-                else None
-            )
-            name = (
-                cst.ensure_type(assign.targets[0].target, cst.Name)
-                if assign and m.matches(assign.targets[0].target, m.Name())
-                else None
-            )
-            if name and assign:
-                data[name.value] = assign
-        return data
-
-    @cached_property
-    def _assignments(self) -> Dict[str, cst.Assign]:
-        self._parse()
-        result = {}
-        for node in self._assignment_nodes:
-            if m.matches(node.targets[0].target, m.Name()):
-                result[cst.ensure_type(node.targets[0].target, cst.Name).value] = node
-        return result
+        self._assignments = assignments
+        self._meta_vars = meta_vars
 
     @cached_property
     def field_nodes(self) -> Iterable[Tuple[models.fields.Field, "FieldCST"]]:

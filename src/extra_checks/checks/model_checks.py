@@ -10,7 +10,7 @@ from django.db import models
 from django.db.models.options import DEFAULT_NAMES as META_ATTRS
 
 from .. import CheckId
-from ..ast import ModelASTProtocol, get_model_ast
+from ..ast import ASTProvider, ModelASTProtocol
 from ..forms import AttrsForm, BaseCheckForm
 from ..registry import ChecksConfig, registry
 from .base_checks import BaseCheck
@@ -51,10 +51,12 @@ def check_models(
             field_checks.append(check)
     if not model_checks and not field_checks:
         return
-    for model in _get_models_to_check(
-        app_configs=app_configs, include_apps=config.include_apps
-    ):
-        model_ast = get_model_ast(model)
+    models = list(
+        _get_models_to_check(app_configs=app_configs, include_apps=config.include_apps)
+    )
+    provider = ASTProvider(models)
+    for model in models:
+        model_ast = provider._get_cst(model)
         for check in model_checks:
             yield from check(model, model_ast=model_ast)
         if field_checks:
