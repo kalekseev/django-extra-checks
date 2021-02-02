@@ -15,7 +15,6 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9, 3.10-dev]
-        ast-backend: ["ast", "cst"]
 
     steps:
       - uses: actions/checkout@v2
@@ -31,8 +30,6 @@ jobs:
         run: python -m pip install tox tox-gh-actions
       - name: Run Tox
         run: python -m tox
-        env:
-          AST_BACKEND: ${{ matrix.ast-backend }}
 
   package:
     runs-on: ubuntu-latest
