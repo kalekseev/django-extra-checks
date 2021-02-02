@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Type
 
 from django.db import models
 
@@ -7,13 +7,12 @@ from .protocols import FieldASTProtocol
 
 if TYPE_CHECKING:
     from .ast import FieldAST
-    from .cst import FieldCST
 
 
 class LazyFieldAST:
     def __init__(
         self,
-        field_ast_class: Union[Type["FieldAST"], Type["FieldCST"]],
+        field_ast_class: Type["FieldAST"],
         assignments: Dict[str, Any],
         field: models.Field,
     ) -> None:
