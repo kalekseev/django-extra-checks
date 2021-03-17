@@ -23,8 +23,9 @@ class TestCase:
         self._settings.EXTRA_CHECKS = settings
         return self
 
-    def check(self, check):
-        self._registry._register([self.TEST_TAG], check)
+    def check(self, *checks):
+        for check in checks:
+            self._registry._register([self.TEST_TAG], check)
         return self
 
     def handler(self, handler):

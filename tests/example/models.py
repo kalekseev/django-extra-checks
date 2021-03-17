@@ -185,6 +185,35 @@ class ChoicesConstraint(models.Model):
         ]
 
 
+# model checks can be disabled by comment right before the model class
+# if your model is decorated than comment must be placed between
+# decorator and class definition. eg:
+# >>> @mydecorator
+# >>> # extra-checks-disable-next-line model-attribute
+# >>> class MyModel:...
+#
 # extra-checks-disable-next-line model-attribute
-class IgnoreMissingSiteAttribute(models.Model):
+class DisableCheckModel(models.Model):
     not_site = models.ForeignKey(Site, verbose_name="site", on_delete=models.CASCADE)
+    # extra-checks-disable-next-line field-text-null
+    text_fail = models.TextField(null=True)
+
+    # extra-checks-disable-next-line no-unique-together
+    class Meta:
+        unique_together = ("text_fail", "no_site")
+
+
+class DisableManyChecksModel(models.Model):
+    # disable two checks
+    # extra-checks-disable-next-line field-text-null, field-verbose-name
+    text_fail = models.TextField(null=True)
+    # this disables all checks
+    # extra-checks-disable-next-line
+    text_fail2 = models.TextField(null=True)
+
+    # disable two checks with separate comments
+    # extra-checks-disable-next-line no-index-together
+    # extra-checks-disable-next-line no-unique-together
+    class Meta:
+        unique_together = ("text_fail", "text_fail2")
+        index_together = ("text_fail", "text_fail2")

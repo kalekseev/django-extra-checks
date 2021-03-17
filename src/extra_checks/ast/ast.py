@@ -16,7 +16,7 @@ from typing import (
 from django.db import models
 from django.utils.functional import SimpleLazyObject
 
-from extra_checks.check_id import CheckId
+from extra_checks.check_id import MODEL_META_CHECKS_NAMES, CheckId
 
 from .exceptions import MissingASTError
 from .protocols import (
@@ -100,9 +100,15 @@ class ModelAST(DisableCommentProtocol, ModelASTProtocol):
         return name in self._meta_vars
 
     def is_disabled_by_comment(self, check_id: str) -> bool:
-        return CheckId.find_check(
-            check_id
-        ) in self._source_provider.get_disabled_checks_for_line(1)
+        check = CheckId.find_check(check_id)
+        if check in MODEL_META_CHECKS_NAMES:
+            if not self._meta_node:
+                # class Meta is not defined on model
+                return False
+            return check in self._source_provider.get_disabled_checks_for_line(
+                self._meta_node.lineno
+            )
+        return check in self._source_provider.get_disabled_checks_for_line(1)
 
 
 def get_field_ast(model_ast: ModelAST, field: models.Field) -> "FieldAST":
