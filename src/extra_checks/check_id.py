@@ -38,4 +38,11 @@ class CheckId(str, enum.Enum):
         return None
 
 
-ALL_CHECK_IDS = frozenset(CheckId._member_names_)
+MODEL_META_CHECKS_NAMES = frozenset(
+    (
+        "model-meta-attribute",
+        "no-unique-together",
+        "no-index-together",
+    )
+)
+ALL_CHECKS_NAMES = frozenset(CheckId._value2member_map_.keys())  # type: ignore
