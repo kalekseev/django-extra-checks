@@ -145,7 +145,7 @@ class Registry:
         checks = ", ".join([c.value if isinstance(c, CheckId) else c for c in args])
         warnings.warn(
             f'@ignore_checks is deprecated and will be removed in version 0.11.0, replace it with comment "# extra-checks-disable-next-line {checks}"',
-            DeprecationWarning,
+            FutureWarning,
         )
 
         def f(entity: Any) -> Any:

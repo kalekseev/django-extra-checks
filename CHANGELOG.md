@@ -2,6 +2,10 @@
 
 ### Unreleased
 
+### 0.9.1
+
+- Replace DeprecationWarning with FutureWarning for `@ignore_checks`
+
 ### 0.9.0
 
 - Disable checks with `extra-checks-disable-next-line` comment
