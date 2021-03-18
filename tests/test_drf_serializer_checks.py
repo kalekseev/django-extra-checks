@@ -15,6 +15,7 @@ from extra_checks.checks.drf_serializer_checks import (
 from tests.example.serializers import (
     ArticleSerializer,
     AuthorSerializer,
+    DisableCheckSerializer,
     ModernAuthorSerializer,
 )
 
@@ -88,3 +89,13 @@ def test_get_serializers_to_check_include_apps(settings):
     # include_apps so it's included too
     assert len(ss) == 1
     assert ss[0] is rest_framework.authtoken.serializers.AuthTokenSerializer
+
+
+def test_drf_ignore_meta_checks(test_case):
+    messages = (
+        test_case.settings({"checks": [CheckDRFSerializerExtraKwargs.Id.value]})
+        .check(CheckDRFSerializerExtraKwargs)
+        .serializers(DisableCheckSerializer)
+        .run()
+    )
+    assert not messages

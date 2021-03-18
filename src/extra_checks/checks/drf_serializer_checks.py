@@ -2,6 +2,7 @@ import importlib
 import site
 from abc import abstractmethod
 from typing import (
+    TYPE_CHECKING,
     Any,
     Iterable,
     Iterator,
@@ -17,10 +18,45 @@ from typing import (
 import django.core.checks
 from rest_framework.serializers import ModelSerializer, Serializer
 
-from .. import CheckId
+from ..ast.protocols import DisableCommentProtocol
+from ..ast.source_provider import SourceProvider
+from ..check_id import DRF_META_CHECKS_NAMES, CheckId
 from ..forms import AttrsForm
 from ..registry import ChecksConfig, registry
 from .base_checks import BaseCheck
+
+if TYPE_CHECKING:
+    cached_property = property
+else:
+    from django.utils.functional import cached_property
+
+
+class DisableCommentProvider(DisableCommentProtocol):
+    def __init__(self, serializer_class: Type[Serializer]):
+        self.serializer_class = serializer_class
+
+    @cached_property
+    def _source_provider(self) -> SourceProvider:
+        return SourceProvider(self.serializer_class)
+
+    def is_disabled_by_comment(self, check_id: str) -> bool:
+        check = CheckId.find_check(check_id)
+        if check in DRF_META_CHECKS_NAMES:
+            lines = (self._source_provider.source or "").splitlines()
+            # find line starting with `class Meta` and lowest indent
+            try:
+                lineno, _ = sorted(
+                    [
+                        (i, line)
+                        for i, line in enumerate(lines, 1)
+                        if line.strip().startswith(("class Meta(", "class Meta:"))
+                    ],
+                    key=lambda a: a[1].find("class Meta"),
+                )[0]
+            except StopIteration:
+                return False
+            return check in self._source_provider.get_disabled_checks_for_line(lineno)
+        return check in self._source_provider.get_disabled_checks_for_line(1)
 
 
 def _collect_serializers(
@@ -90,10 +126,10 @@ def check_drf_serializers(
     s_classes, m_classes = _get_serializers_to_check(config.include_apps)
     for s in s_classes:
         for check in serializer_checks:
-            yield from check(s, None)
+            yield from check(s, DisableCommentProvider(s))
     for s in m_classes:
         for check in model_serializer_checks:
-            yield from check(s, None)
+            yield from check(s, DisableCommentProvider(s))
 
 
 class CheckDRFSerializer(BaseCheck):
