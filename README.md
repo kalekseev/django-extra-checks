@@ -33,14 +33,21 @@ EXTRA_CHECKS = {
 
 #### Ignoring check problems
 
-To ignore all warnings on some object you can use `ignore_checks` decorator:
+Use `extra-checks-disable-next-line` comment to disable checks:
 
 ```python
-from extra_checks import ignore_checks, CheckID
-
-@ignore_checks("model-attribute", "X011", CheckID.X050)
+# disable specific checks on model
+# extra-checks-disable-next-line model-attribute, model-admin
 class MyModel(models.Model):
+    # disable all checks on image field
+    # extra-checks-disable-next-line
     image = models.ImageField()
+
+    # separate comments and check's codes are aslo supported
+    # extra-checks-disable-next-line X014
+    # extra-checks-disable-next-line no-unique-together
+    class Meta:
+        ...
 ```
 
 Another way is to specify type of the object that need to be ignored in `ignore_types` option:
@@ -77,10 +84,10 @@ EXTRA_CHECKS = {
 - **field-null** - don't pass `null=False` to model fields (this is django default).
 - **field-foreign-key-db-index** - ForeignKey fields must specify `db_index` explicitly (to apply only to fields in indexes: `when: indexes`).
 - **field-default-null** - If field nullable (`null=True`), then
-    `default=None` argument is redundant and should be removed.
-    **WARNING** Be aware that setting is database dependent,
-    eg. Oracle interprets empty strings as nulls as a result
-    django uses empty string instead of null as default.
+  `default=None` argument is redundant and should be removed.
+  **WARNING** Be aware that setting is database dependent,
+  eg. Oracle interprets empty strings as nulls as a result
+  django uses empty string instead of null as default.
 - **field-choices-constraint** - Fields with choices must have companion CheckConstraint to enforce choices on database level, [details](https://adamj.eu/tech/2020/01/22/djangos-field-choices-dont-constrain-your-data/).
 
 ### DRF Serializers

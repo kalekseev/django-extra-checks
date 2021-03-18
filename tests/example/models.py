@@ -212,7 +212,7 @@ class DisableManyChecksModel(models.Model):
     text_fail2 = models.TextField(null=True)
 
     # disable two checks with separate comments
-    # extra-checks-disable-next-line no-index-together
+    # extra-checks-disable-next-line X014
     # extra-checks-disable-next-line no-unique-together
     class Meta:
         unique_together = ("text_fail", "text_fail2")
