@@ -2,6 +2,11 @@
 
 ### Unreleased
 
+### dev
+
+- Add option `skipif` that accepts user function
+- Deprecate `ignore_types`
+
 ### 0.9.1
 
 - Replace DeprecationWarning with FutureWarning for `@ignore_checks`

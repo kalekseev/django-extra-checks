@@ -33,6 +33,8 @@ class CheckModelField(BaseCheck):
             pass
 
     def is_ignored(self, obj: Any) -> bool:
+        if self.skipif and self.skipif(obj):
+            return True
         return obj.model in self.ignore_objects or type(obj) in self.ignore_types
 
 

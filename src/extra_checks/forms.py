@@ -1,5 +1,6 @@
 import importlib
 import typing
+import warnings
 
 import django.core.checks
 from django import forms
@@ -33,6 +34,21 @@ class ListField(forms.Field):
             )
         for val in value:
             self.base_field.validate(val)
+
+
+class FilterField(forms.Field):
+    default_error_messages = {
+        "invalid_callable": _("%(value)s is not valid callable for skipif."),
+    }
+
+    def to_python(self, value: typing.Any) -> typing.Optional[typing.Callable]:
+        if not value:
+            return None
+        if not callable(value):
+            raise forms.ValidationError(
+                self.error_messages["invalid_callable"], code="invalid_callable"
+            )
+        return value
 
 
 class UnionField(forms.Field):
@@ -176,6 +192,7 @@ class BaseCheckForm(forms.Form):
         required=False,
     )
     ignore_types = ListField(forms.CharField(), required=False)
+    skipif = FilterField(required=False)
 
     def clean_level(self) -> typing.Optional[int]:
         if self.cleaned_data["level"]:
@@ -195,6 +212,11 @@ class BaseCheckForm(forms.Form):
                 raise forms.ValidationError(
                     f"ignore_types contains entry that can't be imported: '{import_path}'."
                 )
+        if result:
+            warnings.warn(
+                "ignore_types is deprecated and will be removed in version 0.11.0, replace it with skipif option.",
+                FutureWarning,
+            )
         return result
 
     def clean(self) -> typing.Dict[str, typing.Any]:
@@ -203,6 +225,8 @@ class BaseCheckForm(forms.Form):
             and not self.cleaned_data["ignore_types"]
         ):
             del self.cleaned_data["ignore_types"]
+        if "skipif" in self.cleaned_data and not self.cleaned_data["skipif"]:
+            del self.cleaned_data["skipif"]
         return self.cleaned_data
 
 

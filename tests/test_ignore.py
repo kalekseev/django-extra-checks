@@ -1,3 +1,4 @@
+import django.db.models
 import pytest
 
 from extra_checks.checks import model_checks, model_field_checks
@@ -94,3 +95,52 @@ def test_field_ignore_types(test_case):
     )
     assert len(messages) == 1
     assert {m.obj.name for m in messages} == {"file_fail"}
+
+
+def test_field_skipif(test_case):
+    def skipif(field, *args, **kwargs):
+        return isinstance(field, django.db.models.ImageField)
+
+    messages = (
+        test_case.settings(
+            {
+                "checks": [
+                    {
+                        "id": model_field_checks.CheckFieldFileUploadTo.Id.value,
+                        "skipif": skipif,
+                    }
+                ],
+            }
+        )
+        .models(models.ModelFieldFileUploadTo)
+        .check(model_field_checks.CheckFieldFileUploadTo)
+        .run()
+    )
+    assert len(messages) == 1
+    assert {m.obj.name for m in messages} == {"file_fail"}
+
+
+def test_model_skipif(test_case):
+    def skipif(model, *args, **kwargs):
+        return not any(
+            isinstance(f, django.db.models.DateTimeField)
+            for f in model._meta.get_fields()
+        )
+
+    messages = (
+        test_case.settings(
+            {
+                "checks": [
+                    {
+                        "id": model_checks.CheckModelMetaAttribute.Id.value,
+                        "attrs": ["get_latest_by"],
+                        "skipif": skipif,
+                    },
+                ],
+            }
+        )
+        .models(models.Article, models.Author)
+        .check(model_checks.CheckModelMetaAttribute)
+        .run()
+    )
+    assert len(messages) == 0
