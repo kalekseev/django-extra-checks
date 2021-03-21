@@ -49,5 +49,13 @@ devshell.mkShell {
       name = "app.lint";
       command = "pre-commit run -a";
     }
+    {
+      help = "run main tox env";
+      name = "app.tox";
+      command = ''
+        unset PYTHONPATH;
+        tox -e 'py{38}-django{22,30,31,32,32-drf,-latest},flake8,black,isort,manifest,mypy,check'
+      '';
+    }
   ];
 }
