@@ -2,7 +2,7 @@
 
 ### Unreleased
 
-### dev
+### 0.10.0
 
 - Add option `skipif` that accepts user function
 - Deprecate `ignore_types`
