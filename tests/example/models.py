@@ -21,9 +21,11 @@ class Article(models.Model):
     author = models.ForeignKey(
         Author, related_name="articles", on_delete=models.CASCADE
     )
+    created = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Site Article"
+        get_latest_by = ["created"]
 
 
 class NestedField(models.Field):

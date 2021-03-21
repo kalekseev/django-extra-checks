@@ -50,16 +50,32 @@ class MyModel(models.Model):
         ...
 ```
 
-Another way is to specify type of the object that need to be ignored in `ignore_types` option:
+Another way is to provide function that accepts field, model or
+serializer class as its first argument and returns `True` if it must be skipped.
+_Be aware that the more computation expensive your skipif functions the
+slower django check will run._
+
+`skipif` example:
 
 ```python
+def skipif_streamfield(field, *args, **kwargs):
+    return isinstance(field, wagtail.core.fields.StreamField)
+
+def skipif_non_core_app(model_cls, *args, **kwargs):
+    return model_cls._meta.app_label != "my_core_app"
+
 EXTRA_CHECKS = {
     "check": [
         {
             "id": "field-verbose-name-gettext",
             # make this check skip wagtail's StreamField
-            "ignore_types": ["wagtail.core.fields.StreamField"],
-        }
+            "skipif": skipif_streamfield
+        },
+        {
+            "id": "model-admin",
+            # models from non core app shouldn't be registered in admin
+            "skipif": skipif_non_core_app,
+        },
     ]
 }
 ```

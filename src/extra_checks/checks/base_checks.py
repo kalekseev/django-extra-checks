@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import TYPE_CHECKING, Any, ClassVar, Iterator, Optional, Set, Type
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterator, Optional, Set, Type
 
 import django.core.checks
 
@@ -25,10 +25,12 @@ class BaseCheck(ABC):
         level: Optional[int] = None,
         ignore_objects: Optional[Set[Any]] = None,
         ignore_types: Optional[set] = None,
+        skipif: Optional[Callable] = None,
     ) -> None:
         self.level = level or self.level
         self.ignore_objects = ignore_objects or set()
         self.ignore_types = ignore_types or set()
+        self.skipif = skipif
 
     def __call__(
         self, obj: Any, ast: Optional[DisableCommentProtocol] = None, **kwargs: Any
@@ -39,6 +41,8 @@ class BaseCheck(ABC):
                     yield error
 
     def is_ignored(self, obj: Any) -> bool:
+        if self.skipif and self.skipif(obj):
+            return True
         return obj in self.ignore_objects or type(obj) in self.ignore_types
 
     def message(
