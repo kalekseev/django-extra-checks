@@ -214,7 +214,7 @@ class BaseCheckForm(forms.Form):
                 )
         if result:
             warnings.warn(
-                "ignore_types is deprecated and will be removed in version 0.11.0, replace it with skipif option.",
+                "ignore_types is deprecated and will be removed in version 0.12.0, replace it with skipif option.",
                 FutureWarning,
             )
         return result

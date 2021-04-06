@@ -2,6 +2,10 @@
 
 ### Unreleased
 
+### 0.11.0
+
+- Remove `default_app_config`.
+
 ### 0.10.0
 
 - Add option `skipif` that accepts user function

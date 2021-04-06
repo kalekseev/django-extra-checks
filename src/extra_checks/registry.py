@@ -144,7 +144,7 @@ class Registry:
     def ignore_checks(self, *args: Union[CheckId, str]) -> Callable[[Any], Any]:
         checks = ", ".join([c.value if isinstance(c, CheckId) else c for c in args])
         warnings.warn(
-            f'@ignore_checks is deprecated and will be removed in version 0.11.0, replace it with comment "# extra-checks-disable-next-line {checks}"',
+            f'@ignore_checks is deprecated and will be removed in version 0.12.0, replace it with comment "# extra-checks-disable-next-line {checks}"',
             FutureWarning,
         )
 
