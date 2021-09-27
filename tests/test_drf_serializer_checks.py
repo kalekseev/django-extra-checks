@@ -75,12 +75,12 @@ def test_get_serializers_to_check():
 
 def test_get_serializers_to_check_include_apps(settings):
     settings.INSTALLED_APPS += ["rest_framework.authtoken", "rest_framework"]
-    ss, ms = [list(s) for s in _get_serializers_to_check(["rest_framework.authtoken"])]
+    ss, ms = (list(s) for s in _get_serializers_to_check(["rest_framework.authtoken"]))
     assert not ms
     assert len(ss) == 1
     assert ss[0] is rest_framework.authtoken.serializers.AuthTokenSerializer
 
-    ss, ms = [list(s) for s in _get_serializers_to_check(["rest_framework"])]
+    ss, ms = (list(s) for s in _get_serializers_to_check(["rest_framework"]))
     assert len(ms) == 1
     assert ms[0] is rest_framework.serializers.HyperlinkedModelSerializer
     # FIXME: the lines below actually a bug

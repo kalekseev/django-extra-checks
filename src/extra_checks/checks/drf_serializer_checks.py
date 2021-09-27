@@ -46,11 +46,11 @@ class DisableCommentProvider(DisableCommentProtocol):
             # find line starting with `class Meta` and lowest indent
             try:
                 lineno, _ = sorted(
-                    [
+                    (
                         (i, line)
                         for i, line in enumerate(lines, 1)
                         if line.strip().startswith(("class Meta(", "class Meta:"))
-                    ],
+                    ),
                     key=lambda a: a[1].find("class Meta"),
                 )[0]
             except StopIteration:

@@ -105,7 +105,7 @@ class CheckFieldVerboseNameGettextCase(GetTextMixin, CheckModelField):
             ):
                 yield self.message(
                     "Words in verbose name must be all upper case or all lower case.",
-                    hint='Change verbose name to "{}".'.format(value.lower()),
+                    hint=f'Change verbose name to "{value.lower()}".',
                     obj=field,
                 )
 

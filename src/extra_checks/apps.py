@@ -8,5 +8,5 @@ class ExtraChecksConfig(AppConfig):
     name = "extra_checks"
 
     def ready(self) -> None:
-        super(ExtraChecksConfig, self).ready()
+        super().ready()
         registry.bind()
