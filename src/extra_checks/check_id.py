@@ -51,4 +51,4 @@ DRF_META_CHECKS_NAMES = frozenset(
         "drf-model-serializer-meta-attribute",
     )
 )
-ALL_CHECKS_NAMES = frozenset(CheckId._value2member_map_.keys())  # type: ignore
+ALL_CHECKS_NAMES = frozenset(CheckId._value2member_map_.keys())

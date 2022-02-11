@@ -82,12 +82,18 @@ def _filter_app_serializers(
         }
         for s in serializers:
             module = importlib.import_module(s.__module__)
-            if any(module.__file__.startswith(path) for path in app_paths):
+            if any(
+                module.__file__ and module.__file__.startswith(path)
+                for path in app_paths
+            ):
                 yield s
         return
     for s in serializers:
         module = importlib.import_module(s.__module__)
-        if not any(module.__file__.startswith(path) for path in site_prefixes):
+        if not any(
+            module.__file__ and module.__file__.startswith(path)
+            for path in site_prefixes
+        ):
             yield s
 
 
