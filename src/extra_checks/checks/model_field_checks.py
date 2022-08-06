@@ -210,15 +210,9 @@ class CheckFieldForeignKeyIndex(CheckModelField):
     @classmethod
     def get_index_values_in_meta(cls, model: Type[models.Model]) -> Iterator[str]:
         for entry in model._meta.unique_together:
-            if isinstance(entry, str):
-                yield entry
-            else:
-                yield from entry
+            yield from entry
         for entry in model._meta.index_together:
-            if isinstance(entry, str):
-                yield entry
-            else:
-                yield from entry
+            yield from entry
         for constraint in model._meta.constraints:
             if isinstance(constraint, models.UniqueConstraint):
                 yield from constraint.fields
@@ -294,7 +288,7 @@ class CheckFieldChoicesConstraint(CheckModelField):
             in_name = f"{field.name}__in"
             for constraint in model._meta.constraints:
                 if isinstance(constraint, models.CheckConstraint):
-                    conditions = dict(constraint.check.children)
+                    conditions = dict(constraint.check.children)  # type: ignore
                     if in_name in conditions and set(field_choices) == set(
                         conditions[in_name]
                     ):

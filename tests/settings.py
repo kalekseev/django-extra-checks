@@ -3,6 +3,7 @@ from extra_checks import CheckId
 SECRET_KEY = "random"
 
 ALLOWED_HOSTS = ["*"]
+USE_TZ = True
 
 INSTALLED_APPS = [
     "django.contrib.sites",

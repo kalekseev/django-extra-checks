@@ -1,4 +1,5 @@
 import ast
+from functools import partial
 from typing import (
     TYPE_CHECKING,
     Callable,
@@ -93,7 +94,7 @@ class ModelAST(DisableCommentProtocol, ModelASTProtocol):
         for field in self.model_cls._meta.get_fields(include_parents=False):
             if isinstance(field, models.Field):
                 yield field, cast(
-                    FieldAST, SimpleLazyObject(lambda: get_field_ast(self, field))  # type: ignore
+                    FieldAST, SimpleLazyObject(partial(get_field_ast, self, field))
                 )
 
     def has_meta_var(self, name: str) -> bool:
