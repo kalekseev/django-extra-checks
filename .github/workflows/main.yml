@@ -148,4 +148,4 @@ jobs:
           release_name: Release ${{ steps.release_output.outputs.VERSION }}
           body: ${{ steps.release_output.outputs.BODY }}
           draft: false
-          prerelease: ${{ contains(steps.release_output.outputs.VERSION, 'rc') || contains(steps.release_output.outputs.VERSION, 'b') || contains(steps.release_output.outputs.VERSION, 'b') }}
+          prerelease: ${{ contains(steps.release_output.outputs.VERSION, 'rc') || contains(steps.release_output.outputs.VERSION, 'b') || contains(steps.release_output.outputs.VERSION, 'a') }}
