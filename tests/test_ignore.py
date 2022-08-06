@@ -59,44 +59,6 @@ def test_ignore_many_model_check(test_case):
     assert not messages
 
 
-def test_field_ignore_checks(test_case, registry):
-    """We must check that field.model is not in ignore_checks"""
-    messages = (
-        test_case.settings(
-            {"checks": [model_field_checks.CheckFieldVerboseNameGettext.Id.value]}
-        )
-        .models(models.ModelFieldVerboseName)
-        .check(model_field_checks.CheckFieldVerboseNameGettext)
-        .run()
-    )
-    assert messages
-    registry.ignore_checks(model_field_checks.CheckFieldVerboseNameGettext.Id)(
-        models.ModelFieldVerboseName
-    )
-    messages = test_case.run()
-    assert not messages
-
-
-def test_field_ignore_types(test_case):
-    messages = (
-        test_case.settings(
-            {
-                "checks": [
-                    {
-                        "id": model_field_checks.CheckFieldFileUploadTo.Id.value,
-                        "ignore_types": ["django.db.models.ImageField"],
-                    }
-                ],
-            }
-        )
-        .models(models.ModelFieldFileUploadTo)
-        .check(model_field_checks.CheckFieldFileUploadTo)
-        .run()
-    )
-    assert len(messages) == 1
-    assert {m.obj.name for m in messages} == {"file_fail"}
-
-
 def test_field_skipif(test_case):
     def skipif(field, *args, **kwargs):
         return isinstance(field, django.db.models.ImageField)

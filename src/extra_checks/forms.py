@@ -1,6 +1,4 @@
-import importlib
 import typing
-import warnings
 
 import django.core.checks
 from django import forms
@@ -191,7 +189,6 @@ class BaseCheckForm(forms.Form):
         choices=[(c, c) for c in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]],
         required=False,
     )
-    ignore_types = ListField(forms.CharField(), required=False)
     skipif = FilterField(required=False)
 
     def clean_level(self) -> typing.Optional[int]:
@@ -199,32 +196,7 @@ class BaseCheckForm(forms.Form):
             return getattr(django.core.checks, self.cleaned_data["level"])
         return None
 
-    def clean_ignore_types(self) -> set:
-        value = self.cleaned_data["ignore_types"]
-        if not value:
-            return value
-        result = set()
-        for import_path in value:
-            try:
-                path, entry = import_path.rsplit(".", 1)
-                result.add(getattr(importlib.import_module(path), entry))
-            except (ImportError, ValueError, AttributeError):
-                raise forms.ValidationError(
-                    f"ignore_types contains entry that can't be imported: '{import_path}'."
-                )
-        if result:
-            warnings.warn(
-                "ignore_types is deprecated and will be removed in version 0.12.0, replace it with skipif option.",
-                FutureWarning,
-            )
-        return result
-
     def clean(self) -> typing.Dict[str, typing.Any]:
-        if (
-            "ignore_types" in self.cleaned_data
-            and not self.cleaned_data["ignore_types"]
-        ):
-            del self.cleaned_data["ignore_types"]
         if "skipif" in self.cleaned_data and not self.cleaned_data["skipif"]:
             del self.cleaned_data["skipif"]
         return self.cleaned_data

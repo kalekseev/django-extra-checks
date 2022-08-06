@@ -123,13 +123,6 @@ def test_config_include_apps():
     assert form.cleaned_data == {"include_apps": ["tests.example"], "checks": {}}
 
 
-def test_ignore_checks(registry):
-    obj = object()
-    res = registry.ignore_checks("X010", "model-attribute", CheckId.X050)(obj)
-    assert res == obj
-    assert registry.ignored_checks == {obj: {"X010", "model-attribute", CheckId.X050}}
-
-
 def test_config_build_ignored():
     ignored, errors = ChecksConfig._build_ignored(
         {
@@ -145,19 +138,3 @@ def test_config_build_ignored():
         CheckId.X011: {Author},
         CheckId.X050: {Author},
     }
-
-
-def test_config_form_ignore_types():
-    form = ConfigForm(
-        data={
-            "checks": [
-                {
-                    "id": CheckFieldFileUploadTo.Id.value,
-                    "ignore_types": ["django.db.models.ImageField"],
-                }
-            ]
-        }
-    )
-    assert form.is_valid(
-        {CheckFieldFileUploadTo.Id: CheckFieldFileUploadTo.settings_form_class}
-    )

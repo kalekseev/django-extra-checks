@@ -1,4 +1,3 @@
-import warnings
 from functools import partial
 from typing import (
     TYPE_CHECKING,
@@ -51,7 +50,7 @@ class ChecksConfig:
         check_forms = {r.Id: r.settings_form_class for r in include_checks}
         if not hasattr(settings, "EXTRA_CHECKS"):
             return cls()
-        form = ConfigForm(settings.EXTRA_CHECKS)  # type: ignore
+        form = ConfigForm(settings.EXTRA_CHECKS)
         if not form.is_valid(check_forms):
             return cls(errors=form.errors)
         ignored, errors = ChecksConfig._build_ignored(ignore_checks or {})
@@ -141,19 +140,5 @@ class Registry:
     def is_healthy(self) -> bool:
         return True if self._config is None else not self._config.errors
 
-    def ignore_checks(self, *args: Union[CheckId, str]) -> Callable[[Any], Any]:
-        checks = ", ".join([c.value if isinstance(c, CheckId) else c for c in args])
-        warnings.warn(
-            f'@ignore_checks is deprecated and will be removed in version 0.12.0, replace it with comment "# extra-checks-disable-next-line {checks}"',
-            FutureWarning,
-        )
-
-        def f(entity: Any) -> Any:
-            self.ignored_checks[entity] = set(args)
-            return entity
-
-        return f
-
 
 registry = Registry()
-ignore_checks = registry.ignore_checks
