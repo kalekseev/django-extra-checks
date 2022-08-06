@@ -2,7 +2,7 @@
 
 ### Unreleased
 
-- Update test matrix: Django 3.2-4.1 X python 3.8-3.11
+- Update test matrix: Django 3.2-4.1 X python 3.6-3.11
 - Remove deprecated `@ignore_checks`
 - Remove deprecated `ignore_types`
 
