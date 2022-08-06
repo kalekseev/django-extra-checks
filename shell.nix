@@ -1,16 +1,15 @@
-{ pkgs ? import <nixpkgs> { }, system ? builtins.currentSystem }:
-with pkgs;
+{ nixpkgs ? import <nixpkgs> { }, system ? builtins.currentSystem }:
 let
   devshellSrc = fetchTarball {
-    url = "https://github.com/numtide/devshell/archive/f87fb932740abe1c1b46f6edd8a36ade17881666.tar.gz";
-    sha256 = "10cimkql88h7jfjli89i8my8j5la91zm4c78djqlk22dqrxmm6bs";
+    url = "https://github.com/numtide/devshell/archive/f55e05c6d3bbe9acc7363bc8fc739518b2f02976.tar.gz";
+    sha256 = "0fv6jgwrcm04q224hd19inlvwaagp86175jykjdrsm7dh3gz0xp7";
   };
-  devshell = import devshellSrc { inherit system pkgs; };
+  devshell = import devshellSrc { inherit system nixpkgs; };
 in
 devshell.mkShell {
   name = "django-extra-checks";
   packages = [
-    python310
+    nixpkgs.python310
   ];
 
   env = [
@@ -37,7 +36,7 @@ devshell.mkShell {
     {
       help = "install dev deps";
       name = "app.install";
-      command = "pip install -U pip wheel && pip install -e .[dev] && pre-commit install";
+      command = "pip install -U pip wheel && pip install -e .[dev,test] && pre-commit install";
     }
     {
       help = "typecheck project";

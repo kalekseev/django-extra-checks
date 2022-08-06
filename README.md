@@ -119,7 +119,7 @@ EXTRA_CHECKS = {
 
 ## Development
 
-Install dev deps in virtualenv `pip install -e .[dev]`.
+Install dev deps in virtualenv `pip install -e .[dev,test]`.
 
 ## Credits
 
