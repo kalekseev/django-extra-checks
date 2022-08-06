@@ -21,6 +21,7 @@ Collection of useful checks for Django Checks Frameworks
 - **field-boolean-null** - prefer using `BooleanField(null=True)` instead of `NullBooleanField`.
 - **field-null** - don't pass `null=False` to model fields (this is django default).
 - **field-foreign-key-db-index** - ForeignKey fields must specify `db_index` explicitly (to apply only to fields in indexes: `when: indexes`).
+- **field-related-name** - Related fields must specify `related_name` explicitly.
 - **field-default-null** - If field nullable (`null=True`), then
   `default=None` argument is redundant and should be removed.
   **WARNING** Be aware that setting is database dependent,

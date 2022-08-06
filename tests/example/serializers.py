@@ -17,14 +17,6 @@ class AuthorSerializer(serializers.ModelSerializer):
         extra_kwargs = {"first_name": {"read_only": True}}
 
 
-class ModernAuthorSerializer(AuthorSerializer):
-    first_name = serializers.CharField()
-
-    class Meta:
-        model = Author
-        extra_kwargs = {"first_name": {"read_only": True}}
-
-
 class DisableCheckSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField()
 

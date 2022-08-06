@@ -173,9 +173,23 @@ def test_check_field_foreign_key_index_always(test_case):
     }
 
 
+def test_check_field_related_name(test_case):
+    messages = (
+        test_case.settings(
+            {"checks": [model_field_checks.CheckFieldRelatedName.Id.value]}
+        )
+        .models(models.Article)
+        .check(model_field_checks.CheckFieldRelatedName)
+        .run()
+    )
+    assert {m.obj.name for m in messages} == {
+        "site",
+    }
+
+
 def test_generic_key_null(test_case):
     """ensure custom fields without null attribute not checked by rule"""
-    (
+    messages = (
         test_case.settings(
             {"checks": [model_field_checks.CheckFieldNullFalse.Id.value]}
         )
@@ -183,6 +197,7 @@ def test_generic_key_null(test_case):
         .check(model_field_checks.CheckFieldNullFalse)
         .run()
     )
+    assert not messages
 
 
 def test_verbose_name_of_related_field(test_case):

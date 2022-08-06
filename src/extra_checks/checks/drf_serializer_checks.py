@@ -8,7 +8,6 @@ from typing import (
     Iterator,
     List,
     Optional,
-    Set,
     Tuple,
     Type,
     Union,
@@ -23,6 +22,7 @@ from ..ast.source_provider import SourceProvider
 from ..check_id import DRF_META_CHECKS_NAMES, CheckId
 from ..forms import AttrsForm
 from ..registry import ChecksConfig, registry
+from ..utils import collect_subclasses
 from .base_checks import BaseCheck
 
 if TYPE_CHECKING:
@@ -59,18 +59,6 @@ class DisableCommentProvider(DisableCommentProtocol):
         return check in self._source_provider.get_disabled_checks_for_line(1)
 
 
-def _collect_serializers(
-    serializers: Iterable[Type[Serializer]],
-    visited: Optional[Set[Type[Serializer]]] = None,
-) -> Iterator[Type[Serializer]]:
-    visited = visited or set()
-    for serializer in serializers:
-        if serializer not in visited:
-            visited.add(serializer)
-            yield from _collect_serializers(serializer.__subclasses__(), visited)
-            yield serializer
-
-
 def _filter_app_serializers(
     serializers: Iterable[Type[Serializer]],
     include_apps: Optional[Iterable[str]] = None,
@@ -101,13 +89,13 @@ def _get_serializers_to_check(
     include_apps: Optional[Iterable[str]] = None,
 ) -> Tuple[Iterator[Type[Serializer]], Iterator[Type[ModelSerializer]]]:
     serializer_classes = _filter_app_serializers(
-        _collect_serializers(
+        collect_subclasses(
             s for s in Serializer.__subclasses__() if s is not ModelSerializer  # type: ignore
         ),
         include_apps,
     )
     model_serializer_classes = _filter_app_serializers(
-        _collect_serializers(ModelSerializer.__subclasses__()), include_apps
+        collect_subclasses(ModelSerializer.__subclasses__()), include_apps
     )
     return (
         serializer_classes,

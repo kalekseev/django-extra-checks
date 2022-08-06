@@ -20,6 +20,7 @@ class CheckId(str, enum.Enum):
     X058 = "field-foreign-key-db-index"
     X059 = "field-default-null"
     X060 = "field-choices-constraint"
+    X061 = "field-related-name"
     X301 = "drf-model-serializer-extra-kwargs"
     X302 = "drf-model-serializer-meta-attribute"
 

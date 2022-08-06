@@ -250,6 +250,25 @@ class CheckFieldForeignKeyIndex(CheckModelField):
 
 
 @registry.register(django.core.checks.Tags.models)
+class CheckFieldRelatedName(CheckModelField):
+    Id = CheckId.X061
+
+    def apply(
+        self,
+        field: models.fields.Field,
+        ast: FieldASTProtocol,
+        model: Type[models.Model],
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        if isinstance(field, models.fields.related.RelatedField):
+            if not field.remote_field.related_name:
+                yield self.message(
+                    "Related fields must set `related_name` explicitly.",
+                    hint="Specify `related_name` field argument. Use `related_name='+'` to not create a backwards relation.",
+                    obj=field,
+                )
+
+
+@registry.register(django.core.checks.Tags.models)
 class CheckFieldDefaultNull(CheckModelField):
     Id = CheckId.X059
 

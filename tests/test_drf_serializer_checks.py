@@ -8,7 +8,6 @@ except ImportError:
 from extra_checks.checks.drf_serializer_checks import (
     CheckDRFSerializerExtraKwargs,
     CheckDRFSerializerMetaAttribute,
-    _collect_serializers,
     _get_serializers_to_check,
     check_drf_serializers,
 )
@@ -16,19 +15,12 @@ from tests.example.serializers import (
     ArticleSerializer,
     AuthorSerializer,
     DisableCheckSerializer,
-    ModernAuthorSerializer,
 )
 
 
 @pytest.fixture
 def test_case(test_case):
     return test_case.handler(check_drf_serializers)
-
-
-def test_collect_serializers():
-    """test that we collect all descendants"""
-    serializers = _collect_serializers([AuthorSerializer])
-    assert set(serializers) == {AuthorSerializer, ModernAuthorSerializer}
 
 
 def test_model_serializer_extra_kwargs(test_case):

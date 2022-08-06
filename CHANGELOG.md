@@ -2,6 +2,9 @@
 
 ### Unreleased
 
+- Add checks:
+  - `field-related-name`
+
 ### 0.12.0
 
 - Update test matrix: Django 3.2-4.1 X python 3.6-3.11
