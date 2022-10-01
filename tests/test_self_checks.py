@@ -1,6 +1,7 @@
 import textwrap
 
 import django.core.checks
+import pytest
 
 from extra_checks.check_id import CheckId
 from extra_checks.checks import (
@@ -59,6 +60,7 @@ def test_error_formatting(registry, settings):
 
 
 def test_unique_check_ids():
+    pytest.importorskip("rest_framework")
     used_checks = [
         c.Id for c in collect_subclasses(BaseCheck.__subclasses__()) if hasattr(c, "Id")
     ]
