@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterator, Optional, Set, Type
 
 import django.core.checks
@@ -36,8 +36,8 @@ class BaseCheck(ABC):
         self, obj: Any, ast: Optional[DisableCommentProtocol] = None, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if not self.is_ignored(obj):
-            for error in self.apply(obj, ast=ast, **kwargs):  # type: ignore
-                if not ast or not ast.is_disabled_by_comment(error.id):
+            for error in self.apply(obj, ast=ast, **kwargs):
+                if not ast or (error.id and not ast.is_disabled_by_comment(error.id)):
                     yield error
 
     def is_ignored(self, obj: Any) -> bool:
@@ -51,6 +51,12 @@ class BaseCheck(ABC):
         return MESSAGE_MAP[self.level](
             message + f" [{self.Id.value}]", hint=hint, obj=obj, id=self.Id.name
         )
+
+    @abstractmethod
+    def apply(
+        self, *args: Any, **kwargs: Any
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        raise NotImplementedError()
 
 
 if TYPE_CHECKING:
