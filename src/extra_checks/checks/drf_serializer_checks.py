@@ -19,7 +19,7 @@ from rest_framework.serializers import ModelSerializer, Serializer
 
 from ..ast.protocols import DisableCommentProtocol
 from ..ast.source_provider import SourceProvider
-from ..check_id import DRF_META_CHECKS_NAMES, CheckId
+from ..check_id import CheckId
 from ..forms import AttrsForm
 from ..registry import ChecksConfig, registry
 from ..utils import collect_subclasses
@@ -39,24 +39,33 @@ class DisableCommentProvider(DisableCommentProtocol):
     def _source_provider(self) -> SourceProvider:
         return SourceProvider(self.serializer_class)
 
+    def _get_line(self) -> Optional[int]:
+        return 1
+
     def is_disabled_by_comment(self, check_id: str) -> bool:
         check = CheckId.find_check(check_id)
-        if check in DRF_META_CHECKS_NAMES:
-            lines = (self._source_provider.source or "").splitlines()
-            # find line starting with `class Meta` and lowest indent
-            try:
-                lineno, _ = sorted(
-                    (
-                        (i, line)
-                        for i, line in enumerate(lines, 1)
-                        if line.strip().startswith(("class Meta(", "class Meta:"))
-                    ),
-                    key=lambda a: a[1].find("class Meta"),
-                )[0]
-            except StopIteration:
-                return False
-            return check in self._source_provider.get_disabled_checks_for_line(lineno)
-        return check in self._source_provider.get_disabled_checks_for_line(1)
+        line = self._get_line()
+        return (
+            line is not None
+            and check in self._source_provider.get_disabled_checks_for_line(line)
+        )
+
+
+class DisableMetaCommentProvider(DisableCommentProvider):
+    def _get_line(self) -> Optional[int]:
+        lines = (self._source_provider.source or "").splitlines()
+        # find line starting with `class Meta` and lowest indent
+        try:
+            return sorted(
+                (
+                    (i, line)
+                    for i, line in enumerate(lines, 1)
+                    if line.strip().startswith(("class Meta(", "class Meta:"))
+                ),
+                key=lambda a: a[1].find("class Meta"),
+            )[0][0]
+        except StopIteration:
+            return None
 
 
 def _filter_app_serializers(
@@ -105,31 +114,53 @@ def _get_serializers_to_check(
 
 @registry.add_handler("extra_checks_drf_serializer")
 def check_drf_serializers(
-    checks: Iterable[Union["CheckDRFSerializer", "CheckDRFModelSerializer"]],
+    checks: Iterable[
+        Union[
+            "CheckDRFSerializer",
+            "CheckDRFModelSerializer",
+            "CheckDRFModelSerializerMeta",
+        ]
+    ],
     config: ChecksConfig,
     app_configs: Optional[List[Any]] = None,
     **kwargs: Any,
 ) -> Iterator[Any]:
     model_serializer_checks = []
+    model_meta_serializer_checks = []
     serializer_checks = []
     for check in checks:
-        if isinstance(check, CheckDRFModelSerializer):
+        if isinstance(check, CheckDRFModelSerializerMeta):
+            model_meta_serializer_checks.append(check)
+        elif isinstance(check, CheckDRFModelSerializer):
             model_serializer_checks.append(check)
         else:
             serializer_checks.append(check)
     s_classes, m_classes = _get_serializers_to_check(config.include_apps)
     for s in s_classes:
+        comment_provider = DisableCommentProvider(s)
         for check in serializer_checks:
-            yield from check(s, DisableCommentProvider(s))
+            yield from check(s, comment_provider)
     for s in m_classes:
+        comment_provider = DisableCommentProvider(s)
         for check in model_serializer_checks:
-            yield from check(s, DisableCommentProvider(s))
+            yield from check(s, comment_provider)
+        comment_provider = DisableMetaCommentProvider(s)
+        for check in model_meta_serializer_checks:
+            yield from check(s, comment_provider)
 
 
 class CheckDRFSerializer(BaseCheck):
     @abstractmethod
     def apply(
         self, serializer: Serializer, **kwargs: Any
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        raise NotImplementedError()
+
+
+class CheckDRFModelSerializerMeta(BaseCheck):
+    @abstractmethod
+    def apply(
+        self, serializer: ModelSerializer, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         raise NotImplementedError()
 
@@ -143,7 +174,7 @@ class CheckDRFModelSerializer(BaseCheck):
 
 
 @registry.register("extra_checks_drf_serializer")
-class CheckDRFSerializerExtraKwargs(CheckDRFModelSerializer):
+class CheckDRFSerializerExtraKwargs(CheckDRFModelSerializerMeta):
     Id = CheckId.X301
     level = django.core.checks.ERROR
 
@@ -164,7 +195,7 @@ class CheckDRFSerializerExtraKwargs(CheckDRFModelSerializer):
 
 
 @registry.register("extra_checks_drf_serializer")
-class CheckDRFSerializerMetaAttribute(CheckDRFModelSerializer):
+class CheckDRFSerializerMetaAttribute(CheckDRFModelSerializerMeta):
     Id = CheckId.X302
     settings_form_class = AttrsForm
 

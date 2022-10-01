@@ -37,15 +37,19 @@ def _get_models_to_check(
 
 @registry.add_handler(django.core.checks.Tags.models)
 def check_models(
-    checks: Iterable[Union["CheckModel", "CheckModelField"]],
+    checks: Iterable[Union["CheckModel", "CheckModelField", "CheckModelMeta"]],
     config: ChecksConfig,
     app_configs: Optional[List[Any]] = None,
     **kwargs: Any,
 ) -> Iterator[Any]:
-    model_checks = []
+    model_checks: List[Union[CheckModel, CheckModelMeta]] = []
     field_checks = []
+    meta_checks = []
     for check in checks:
-        if isinstance(check, CheckModel):
+        if isinstance(check, CheckModelMeta):
+            meta_checks.append(check)
+            model_checks.append(check)
+        elif isinstance(check, CheckModel):
             model_checks.append(check)
         else:
             field_checks.append(check)
@@ -54,7 +58,7 @@ def check_models(
     for model in _get_models_to_check(
         app_configs=app_configs, include_apps=config.include_apps
     ):
-        model_ast = get_model_ast(model)
+        model_ast = get_model_ast(model, [c.Id for c in meta_checks])
         for check in model_checks:
             yield from check(model, ast=model_ast)
         if field_checks:
@@ -64,6 +68,14 @@ def check_models(
 
 
 class CheckModel(BaseCheck):
+    @abstractmethod
+    def apply(
+        self, model: Type[models.Model], ast: ModelASTProtocol
+    ) -> Iterator[django.core.checks.CheckMessage]:
+        raise NotImplementedError()
+
+
+class CheckModelMeta(BaseCheck):
     @abstractmethod
     def apply(
         self, model: Type[models.Model], ast: ModelASTProtocol
@@ -97,7 +109,7 @@ class CheckModelAttribute(CheckModel):
 
 
 @registry.register(django.core.checks.Tags.models)
-class CheckModelMetaAttribute(CheckModel):
+class CheckModelMetaAttribute(CheckModelMeta):
     Id = CheckId.X011
 
     class MetaAttrsForm(BaseCheckForm):
@@ -156,7 +168,7 @@ class CheckModelAdmin(CheckModel):
 
 
 @registry.register(django.core.checks.Tags.models)
-class CheckNoUniqueTogether(CheckModel):
+class CheckNoUniqueTogether(CheckModelMeta):
     Id = CheckId.X013
 
     def apply(
@@ -170,7 +182,7 @@ class CheckNoUniqueTogether(CheckModel):
 
 
 @registry.register(django.core.checks.Tags.models)
-class CheckNoIndexTogether(CheckModel):
+class CheckNoIndexTogether(CheckModelMeta):
     Id = CheckId.X014
 
     def apply(

@@ -81,7 +81,7 @@ class MyModel(models.Model):
     # extra-checks-disable-next-line
     image = models.ImageField()
 
-    # separate comments and check's codes are aslo supported
+    # separate comments and check's codes are also supported
     # extra-checks-disable-next-line X014
     # extra-checks-disable-next-line no-unique-together
     class Meta:

@@ -1,5 +1,5 @@
 import enum
-from typing import Any, Optional
+from typing import Optional, cast
 
 
 class CheckId(str, enum.Enum):
@@ -25,31 +25,16 @@ class CheckId(str, enum.Enum):
     X302 = "drf-model-serializer-meta-attribute"
 
     @classmethod
-    def find_check(cls, value: Any) -> Optional["CheckId"]:
-        if isinstance(value, CheckId):
-            return value
+    def find_check(cls, value: str) -> Optional["CheckId"]:
         try:
             return cls(value)
         except ValueError:
             pass
         try:
-            return cls._member_map_[value]  # type: ignore
+            return cast(CheckId, cls._member_map_[value])
         except KeyError:
             pass
         return None
 
 
-MODEL_META_CHECKS_NAMES = frozenset(
-    (
-        "model-meta-attribute",
-        "no-unique-together",
-        "no-index-together",
-    )
-)
-DRF_META_CHECKS_NAMES = frozenset(
-    (
-        "drf-model-serializer-extra-kwargs",
-        "drf-model-serializer-meta-attribute",
-    )
-)
 ALL_CHECKS_NAMES = frozenset(CheckId._value2member_map_.keys())

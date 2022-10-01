@@ -2,6 +2,7 @@
 
 ### Unreleased
 
+- Use inheritance to determine check type
 - Add checks:
   - `field-related-name`
 

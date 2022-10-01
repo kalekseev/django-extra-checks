@@ -3,6 +3,7 @@ from functools import partial
 from typing import (
     TYPE_CHECKING,
     Callable,
+    Container,
     Dict,
     Iterable,
     Iterator,
@@ -17,7 +18,7 @@ from typing import (
 from django.db import models
 from django.utils.functional import SimpleLazyObject
 
-from extra_checks.check_id import MODEL_META_CHECKS_NAMES, CheckId
+from extra_checks.check_id import CheckId
 
 from .exceptions import MissingASTError
 from .protocols import (
@@ -35,8 +36,9 @@ else:
 
 
 class ModelAST(DisableCommentProtocol, ModelASTProtocol):
-    def __init__(self, model_cls: Type[models.Model]):
+    def __init__(self, model_cls: Type[models.Model], meta_checks: Container[CheckId]):
         self.model_cls = model_cls
+        self.meta_checks = meta_checks
         self._assignment_nodes: List[ast.Assign] = []
         self._meta: Optional[ast.ClassDef] = None
 
@@ -102,7 +104,7 @@ class ModelAST(DisableCommentProtocol, ModelASTProtocol):
 
     def is_disabled_by_comment(self, check_id: str) -> bool:
         check = CheckId.find_check(check_id)
-        if check in MODEL_META_CHECKS_NAMES:
+        if check in self.meta_checks:
             if not self._meta_node:
                 # class Meta is not defined on model
                 return False
