@@ -1,5 +1,16 @@
+import warnings
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, Iterator, Optional, Set, Type
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ClassVar,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Type,
+)
 
 import django.core.checks
 
@@ -19,6 +30,7 @@ class BaseCheck(ABC):
     Id: CheckId
     settings_form_class: ClassVar[Type[forms.BaseCheckForm]] = forms.BaseCheckForm
     level = django.core.checks.WARNING
+    deprecation_warnings: List[str] = []
 
     def __init__(
         self,
@@ -31,6 +43,8 @@ class BaseCheck(ABC):
         self.ignore_objects = ignore_objects or set()
         self.ignore_types = ignore_types or set()
         self.skipif = skipif
+        for warning in self.deprecation_warnings:
+            warnings.warn(warning, FutureWarning)
 
     def __call__(
         self, obj: Any, ast: Optional[DisableCommentProtocol] = None, **kwargs: Any

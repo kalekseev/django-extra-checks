@@ -3,6 +3,7 @@
 ### Unreleased
 
 - Use inheritance to determine check type
+- Deprecate `field-boolean-null`
 - Add checks:
   - `field-related-name`
 
