@@ -2,6 +2,8 @@
 
 ### Unreleased
 
+### 0.13.0
+
 - Use inheritance to determine check type
 - Deprecate `field-boolean-null`
 - Add checks:
