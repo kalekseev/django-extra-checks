@@ -305,8 +305,10 @@ class CheckFieldChoicesConstraint(CheckModelField):
         choices = field.flatchoices  # type: ignore
         if choices:
             field_choices = [c[0] for c in choices]
-            if field.blank and "" not in field_choices:
+            if field.blank and "" not in field_choices and field.empty_strings_allowed:
                 field_choices.append("")
+            if field.null and None not in field_choices:
+                field_choices.append(None)
             in_name = f"{field.name}__in"
             for constraint in model._meta.constraints:
                 if isinstance(constraint, models.CheckConstraint):
