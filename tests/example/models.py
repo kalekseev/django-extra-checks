@@ -166,6 +166,8 @@ class ChoicesConstraint(models.Model):
     grouped = models.IntegerField(
         choices=[("g1", ((1, "1"), (2, "2"))), ("g2", ((3, "3"),))]
     )
+    integer_blank = models.IntegerField(choices=[(1, "One"), (2, "Two")], blank=True, null=True)
+    integer_blank_invalid = models.IntegerField(choices=[(1, "One"), (2, "Two")], blank=True, null=True)
 
     class Meta:
         constraints = [
@@ -183,6 +185,12 @@ class ChoicesConstraint(models.Model):
             ),
             models.CheckConstraint(
                 name="grouped_valid", check=models.Q(grouped__in=(1, 2, 3))
+            ),
+            models.CheckConstraint(
+                name="integer_blank", check=models.Q(integer_blank__in=(1, 2))
+            ),
+            models.CheckConstraint(
+                name="integer_blank_invalid", check=models.Q(integer_blank_invalid__in=(1, 2, ""))
             ),
         ]
 
