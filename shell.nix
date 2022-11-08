@@ -9,7 +9,7 @@ in
 devshell.mkShell {
   name = "django-extra-checks";
   packages = [
-    nixpkgs.python310
+    nixpkgs.python311
   ];
 
   env = [
