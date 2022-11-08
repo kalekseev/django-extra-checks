@@ -302,10 +302,10 @@ class CheckFieldChoicesConstraint(CheckModelField):
         ast: FieldASTProtocol,
         model: Type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
-        choices = field.flatchoices  # type: ignore
+        choices = field.flatchoices
         if choices:
             field_choices = [c[0] for c in choices]
-            if field.blank and "" not in field_choices and field.empty_strings_allowed:
+            if field.empty_strings_allowed and field.blank and "" not in field_choices:
                 field_choices.append("")
             in_name = f"{field.name}__in"
             for constraint in model._meta.constraints:
