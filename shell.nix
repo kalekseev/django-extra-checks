@@ -31,7 +31,7 @@ devshell.mkShell {
     {
       help = "run tests";
       name = "app.test";
-      command = "pytest";
+      command = "pytest $@";
     }
     {
       help = "install dev deps";
