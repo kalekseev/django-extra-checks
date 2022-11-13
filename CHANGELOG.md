@@ -2,6 +2,10 @@
 
 ### Unreleased
 
+### 0.13.2
+
+- Fix: OSError while trying to parse source code of a generated model #27
+
 ### 0.13.1
 
 - Fix: respect `empty_strings_allowed` in choices constraint #31
