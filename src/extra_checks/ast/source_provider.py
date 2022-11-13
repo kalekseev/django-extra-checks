@@ -43,7 +43,7 @@ class SourceProvider:
     def source(self) -> Optional[str]:
         try:
             return textwrap.dedent(inspect.getsource(self._obj))
-        except TypeError:
+        except (TypeError, OSError):
             # TODO: add warning?
             return None
 
