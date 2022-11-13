@@ -2,6 +2,10 @@
 
 ### Unreleased
 
+### 0.13.1
+
+- Fix: respect `empty_strings_allowed` in choices constraint #31
+
 ### 0.13.0
 
 - Use inheritance to determine check type
