@@ -2,6 +2,10 @@
 
 ### Unreleased
 
+### 0.13.3
+
+- Fix: handle not alphadigital chars in verbose text
+
 ### 0.13.2
 
 - Fix: OSError while trying to parse source code of a generated model #27
