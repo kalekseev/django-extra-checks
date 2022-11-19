@@ -59,6 +59,17 @@ def test_check_field_verbose_name_gettext_case(test_case):
     }
 
 
+def test_check_field_verbose_name_gettext_check_case():
+    is_invalid = model_field_checks.CheckFieldVerboseNameGettextCase.is_invalid
+    assert is_invalid("Abc Def")
+    assert not is_invalid("abc def")
+    assert not is_invalid("ABC def")
+    assert not is_invalid("ABC DEF")
+    assert not is_invalid("abc123 ABC123")
+    assert is_invalid("Abc123 AbC123")
+    assert not is_invalid("abc / def")
+
+
 def test_check_field_null_boolean(test_case):
     messages = (
         test_case.models(models.ModelFieldNullFalse)

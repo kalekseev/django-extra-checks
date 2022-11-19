@@ -87,6 +87,14 @@ class CheckFieldVerboseNameGettext(GetTextMixin, CheckModelField):
 class CheckFieldVerboseNameGettextCase(GetTextMixin, CheckModelField):
     Id = CheckId.X052
 
+    @classmethod
+    def is_invalid(cls, value: object) -> bool:
+        return bool(
+            value
+            and isinstance(value, str)
+            and any(w != w.lower() and w != w.upper() for w in value.split(" "))
+        )
+
     def apply(
         self, field: models.fields.Field, ast: FieldASTProtocol, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
@@ -96,13 +104,7 @@ class CheckFieldVerboseNameGettextCase(GetTextMixin, CheckModelField):
             and verbose_name.callable_func_name == self.gettext_func
         ):
             value = verbose_name.get_call_first_args()
-            if (
-                value
-                and isinstance(value, str)
-                and not all(
-                    w.islower() or w.isupper() or w.isdigit() for w in value.split(" ")
-                )
-            ):
+            if self.is_invalid(value):
                 yield self.message(
                     "Words in verbose name must be all upper case or all lower case.",
                     hint=f'Change verbose name to "{value.lower()}".',
