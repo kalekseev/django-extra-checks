@@ -2,6 +2,8 @@
 
 ### Unreleased
 
+- Drop python 3.6 support
+
 ### 0.13.3
 
 - Fix: handle not alphadigital chars in verbose text
