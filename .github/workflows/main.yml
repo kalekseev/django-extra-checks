@@ -8,14 +8,14 @@ on:
       - v*
   pull_request:
   schedule:
-    - cron:  '30 16 1 * *'
+    - cron: "30 16 1 * *"
 
 jobs:
   tests:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      PYTHONPATH: "."
+      PYTHONPATH: "src"
     strategy:
       matrix:
         # https://github.com/actions/python-versions/blob/main/versions-manifest.json
@@ -37,15 +37,14 @@ jobs:
           - django-version: "https://github.com/django/django/archive/main.tar.gz"
             python-version: 3.9
 
-
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         if: "!endsWith(matrix.python-version, '-dev')"
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-          cache-dependency-path: 'setup.cfg'
+          cache: "pip"
+          cache-dependency-path: "pyproject.toml"
       - uses: deadsnakes/action@v2.1.1
         if: endsWith(matrix.python-version, '-dev')
         with:
@@ -60,14 +59,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      PYTHONPATH: "."
+      PYTHONPATH: "src"
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-          cache: 'pip'
-          cache-dependency-path: 'setup.cfg'
+          cache: "pip"
+          cache-dependency-path: "pyproject.toml"
       - uses: actions/cache@v3
         with:
           path: ~/.cache/pre-commit
@@ -84,15 +83,13 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-          cache: 'pip'
-          cache-dependency-path: 'setup.cfg'
+          cache: "pip"
+          cache-dependency-path: "pyproject.toml"
       - name: Install dependencies
         run: |
-          python -m pip install setuptools wheel twine
+          python -m pip install hatch
       - name: Package
-        run: |
-          python setup.py sdist bdist_wheel
-          twine check dist/*
+        run: python -m hatch build
       - name: Upload dist
         uses: actions/upload-artifact@v3
         with:
@@ -109,12 +106,7 @@ jobs:
       - name: Set release env
         id: release_output
         run: |
-          VERSION=$(awk '$1 == "version" {print $3}' setup.cfg)
-          TAG_VERSION="${GITHUB_REF:11}"
-          if [[ "$VERSION" != "$TAG_VERSION" ]]; then
-            echo "Tag doesn't match package version."
-            exit 1
-          fi
+          VERSION="${GITHUB_REF:11}"
           BODY=$(awk -v RS='### ' '/'$VERSION'.*/ {print $0}' CHANGELOG.md)
           if [[ -z "$BODY" ]]; then
             echo "No changelog record for version $VERSION."
