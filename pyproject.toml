@@ -1,0 +1,48 @@
+[tool.ruff]
+src = ["src"]
+target-version = "py37"
+select = [
+  'B',
+  'C',
+  'E',
+  'F',
+  'N',
+  'W',
+  'UP',
+  'RUF',
+  'INP',
+  'I'
+]
+ignore = [
+  'E501',
+  'B904',
+  'B905',
+]
+
+[tool.pytest.ini_options]
+addopts = "-p no:doctest --cov=extra_checks --cov-branch --ds=tests.settings"
+django_find_project = false
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+
+disallow_untyped_defs = true
+check_untyped_defs = true
+ignore_missing_imports = true
+implicit_reexport = true
+strict_equality = true
+warn_unreachable = true
+show_error_codes = true
+
+no_implicit_optional = true
+strict_optional = true
+warn_no_return = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+
+[tool.django-stubs]
+django_settings_module = "tests.settings"
