@@ -106,7 +106,7 @@ class Registry:
     ) -> Optional[Callable]:
         if checks:
             f = partial(handler, checks, config)
-            django.core.checks.register(f, tag)
+            django.core.checks.register(f, tag)  # type: ignore
             return f
         return None
 

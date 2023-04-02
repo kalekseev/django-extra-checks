@@ -44,7 +44,7 @@ class BaseCheck(ABC):
         self.ignore_types = ignore_types or set()
         self.skipif = skipif
         for warning in self.deprecation_warnings:
-            warnings.warn(warning, FutureWarning)
+            warnings.warn(warning, FutureWarning, stacklevel=2)
 
     def __call__(
         self, obj: Any, ast: Optional[DisableCommentProtocol] = None, **kwargs: Any

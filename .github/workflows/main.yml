@@ -22,8 +22,8 @@ jobs:
         python-version: [3.8, 3.9, "3.10", "3.11"]
         django-version:
           - "Django>=3.2,<4.0"
-          - "Django>=4.0,<4.1"
           - "Django>=4.1,<4.2"
+          - "Django==4.2rc1"
           - "https://github.com/django/django/archive/main.tar.gz"
         include:
           - drf: djangorestframework
@@ -31,6 +31,12 @@ jobs:
             django-version: "Django<4.2,>=4.1" # must be different from django-version
           - django-version: "Django<4.0,>=3.2"
             python-version: 3.7
+        exclude:
+          - django-version: "https://github.com/django/django/archive/main.tar.gz"
+            python-version: 3.8
+          - django-version: "https://github.com/django/django/archive/main.tar.gz"
+            python-version: 3.9
+
 
     steps:
       - uses: actions/checkout@v3
