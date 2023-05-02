@@ -118,6 +118,7 @@ class DictField(forms.ChoiceField):
 
 
 class ConfigForm(forms.Form):
+    errors: dict  # type: ignore [assignment]
     include_apps = ListField(forms.CharField(), required=False)
     level = forms.ChoiceField(
         choices=[(c, c) for c in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]],

@@ -17,7 +17,6 @@ from typing import (
 
 import django.apps
 import django.core.checks
-from django import forms
 from django.conf import settings
 
 from . import CheckId
@@ -31,7 +30,7 @@ class ChecksConfig:
     def __init__(
         self,
         *,
-        errors: Optional[forms.utils.ErrorDict] = None,
+        errors: Optional[dict] = None,
         checks: Optional[Dict[CheckId, dict]] = None,
         include_apps: Optional[Iterable[str]] = None,
         ignored_objects: Optional[Dict[CheckId, Set[Any]]] = None,
@@ -55,7 +54,7 @@ class ChecksConfig:
             return cls(errors=form.errors)
         ignored, errors = ChecksConfig._build_ignored(ignore_checks or {})
         if errors:
-            return cls(errors={"__all__": errors})  # type: ignore
+            return cls(errors={"__all__": errors})
         return cls(ignored_objects=ignored, **form.cleaned_data)
 
     @staticmethod
