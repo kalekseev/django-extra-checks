@@ -87,6 +87,7 @@ ignore = [
   'E501',
   'B904',
   'B905',
+  'RUF012',
 ]
 
 [tool.pytest.ini_options]
