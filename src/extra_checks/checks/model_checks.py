@@ -184,6 +184,9 @@ class CheckNoUniqueTogether(CheckModelMeta):
 @registry.register(django.core.checks.Tags.models)
 class CheckNoIndexTogether(CheckModelMeta):
     Id = CheckId.X014
+    deprecation_warnings = [
+        "`no-index-together` check is deprecated and will be removed in a future version"
+    ]
 
     def apply(
         self, model: Type[models.Model], ast: ModelASTProtocol
