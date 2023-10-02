@@ -15,7 +15,7 @@ class CheckId(str, enum.Enum):
     X053 = "field-help-text-gettext"
     X054 = "field-file-upload-to"
     X055 = "field-text-null"
-    X056 = "field-boolean-null"
+    # X056 = "field-boolean-null" - removed
     X057 = "field-null"
     X058 = "field-foreign-key-db-index"
     X059 = "field-default-null"

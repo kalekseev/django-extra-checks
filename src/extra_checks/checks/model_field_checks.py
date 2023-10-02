@@ -164,24 +164,6 @@ class CheckFieldTextNull(CheckModelField):
 
 
 @registry.register(django.core.checks.Tags.models)
-class CheckFieldNullBoolean(CheckModelField):
-    Id = CheckId.X056
-    deprecation_warnings = [
-        "`field-boolean-null` check is deprecated and will be removed in version 0.14.0"
-    ]
-
-    def apply(
-        self, field: models.fields.Field, **kwargs: Any
-    ) -> Iterator[django.core.checks.CheckMessage]:
-        if isinstance(field, models.NullBooleanField):
-            yield self.message(
-                f'Field "{field.name}" should be `BooleanField` with attribute `null=True`.',
-                hint="Replace `NullBooleanField` by `BooleanField` with attribute `null=True`.",
-                obj=field,
-            )
-
-
-@registry.register(django.core.checks.Tags.models)
 class CheckFieldNullFalse(CheckModelField):
     Id = CheckId.X057
 

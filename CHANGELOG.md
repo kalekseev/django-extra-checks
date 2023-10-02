@@ -2,7 +2,10 @@
 
 ### Unreleased
 
-- Drop python 3.6 support
+- Remove `field-boolean-null`
+- Deprecate `no-index-together`
+- Drop support for python < 3.8
+- Drop support for django < 4.2
 
 ### 0.13.3
 

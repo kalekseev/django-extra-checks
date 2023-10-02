@@ -70,20 +70,6 @@ def test_check_field_verbose_name_gettext_check_case():
     assert not is_invalid("abc / def")
 
 
-def test_check_field_null_boolean(test_case):
-    messages = (
-        test_case.models(models.ModelFieldNullFalse)
-        .settings({"checks": [model_field_checks.CheckFieldNullBoolean.Id.value]})
-        .check(model_field_checks.CheckFieldNullBoolean)
-        .run()
-    )
-    assert len(messages) == 1
-    assert messages[0].id == model_field_checks.CheckFieldNullBoolean.Id.name
-    assert {m.obj.name for m in messages} == {
-        "null_fail",
-    }
-
-
 def test_check_field_help_text_gettext(test_case):
     messages = (
         test_case.settings(
