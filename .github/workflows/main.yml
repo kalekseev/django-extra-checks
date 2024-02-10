@@ -19,33 +19,33 @@ jobs:
     strategy:
       matrix:
         # https://github.com/actions/python-versions/blob/main/versions-manifest.json
-        python-version: [3.8, 3.9, "3.10", "3.11", "3.12.0-rc.3"]
+        python-version: [3.8, 3.9, "3.10", "3.11", "3.12"]
         django-version:
           - "Django>=4.2,<5.0"
-          - "Django>=5.0a1,<5.1"
+          - "Django>=5.0,<5.1"
           # - "https://github.com/django/django/archive/main.tar.gz"
         include:
           - drf: djangorestframework
-            python-version: "3.11"
+            python-version: "3.12"
             django-version: "Django<5.0,>=4.2" # must be different from django-version
         exclude:
-          - django-version: "Django>=5.0a1,<5.1"
+          - django-version: "Django>=5.0,<5.1"
             python-version: 3.8
-          - django-version: "Django>=5.0a1,<5.1"
+          - django-version: "Django>=5.0,<5.1"
             python-version: 3.9
-
+          # - django-version: "https://github.com/django/django/archive/main.tar.gz"
+          #   python-version: 3.8
+          # - django-version: "https://github.com/django/django/archive/main.tar.gz"
+          #   python-version: 3.9
+          #
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         if: "!endsWith(matrix.python-version, '-dev')"
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
           cache-dependency-path: "pyproject.toml"
-      - uses: deadsnakes/action@v2.1.1
-        if: endsWith(matrix.python-version, '-dev')
-        with:
-          python-version: ${{ matrix.python-version }}
       - name: Install deps
         run: |
           python -m pip install -e .[test]
@@ -58,13 +58,13 @@ jobs:
     env:
       PYTHONPATH: "src"
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: "pip"
           cache-dependency-path: "pyproject.toml"
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
@@ -75,11 +75,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: "pip"
           cache-dependency-path: "pyproject.toml"
       - name: Install dependencies
@@ -88,7 +88,7 @@ jobs:
       - name: Package
         run: python -m hatch build
       - name: Upload dist
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist
@@ -99,7 +99,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set release env
         id: release_output
         run: |
@@ -114,11 +114,11 @@ jobs:
           echo "::set-output name=VERSION::${VERSION}"
           echo "::set-output name=BODY::${BODY}"
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Download dist
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist

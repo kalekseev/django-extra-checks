@@ -59,7 +59,7 @@ class ChecksConfig:
 
     @staticmethod
     def _build_ignored(
-        ignore_checks: Dict[Any, Set[Union[str, CheckId]]]
+        ignore_checks: Dict[Any, Set[Union[str, CheckId]]],
     ) -> Tuple[Dict[CheckId, Set[Any]], List[str]]:
         errors = []
         ignored: Dict[CheckId, set] = {}

@@ -99,7 +99,7 @@ def _get_serializers_to_check(
 ) -> Tuple[Iterator[Type[Serializer]], Iterator[Type[ModelSerializer]]]:
     serializer_classes = _filter_app_serializers(
         collect_subclasses(
-            s for s in Serializer.__subclasses__() if s is not ModelSerializer  # type: ignore
+            s for s in Serializer.__subclasses__() if s is not ModelSerializer
         ),
         include_apps,
     )

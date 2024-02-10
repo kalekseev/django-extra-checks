@@ -1,10 +1,4 @@
-import sys
-from typing import Any, Iterable, Optional, Tuple
-
-if sys.version_info >= (3, 8):
-    from typing import Protocol
-else:
-    from typing_extensions import Protocol
+from typing import Any, Iterable, Optional, Protocol, Tuple
 
 from django.db import models
 

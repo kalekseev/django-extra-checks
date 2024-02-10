@@ -95,8 +95,11 @@ class ModelAST(DisableCommentProtocol, ModelASTProtocol):
     def field_nodes(self) -> Iterable[Tuple[models.fields.Field, "FieldAST"]]:
         for field in self.model_cls._meta.get_fields(include_parents=False):
             if isinstance(field, models.Field):
-                yield field, cast(
-                    FieldAST, SimpleLazyObject(partial(get_field_ast, self, field))
+                yield (
+                    field,
+                    cast(
+                        FieldAST, SimpleLazyObject(partial(get_field_ast, self, field))
+                    ),
                 )
 
     def has_meta_var(self, name: str) -> bool:

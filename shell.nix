@@ -9,17 +9,13 @@ in
 devshell.mkShell {
   name = "django-extra-checks";
   packages = [
-    nixpkgs.python311
+    nixpkgs.python312
   ];
 
   env = [
     {
       name = "PYTHONUNBUFFERED";
       value = "1";
-    }
-    {
-      name = "PYTHONPATH";
-      eval = "$PWD";
     }
     {
       name = "DJANGO_SETTINGS_MODULE";
