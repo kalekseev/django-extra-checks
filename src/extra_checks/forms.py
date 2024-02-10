@@ -167,7 +167,9 @@ class ConfigForm(forms.Form):
             del self.cleaned_data["level"]
         return self.cleaned_data
 
-    def is_valid(self, check_forms: typing.Dict[CheckId, "typing.Type[BaseCheckForm]"]) -> bool:  # type: ignore
+    def is_valid(  # type: ignore
+        self, check_forms: typing.Dict[CheckId, "typing.Type[BaseCheckForm]"]
+    ) -> bool:
         if not super().is_valid():
             return False
         checks = self.cleaned_data.get("checks", {})

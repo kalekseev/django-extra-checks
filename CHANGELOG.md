@@ -2,10 +2,13 @@
 
 ### Unreleased
 
+### 0.14.0
+
 - Remove `field-boolean-null`
 - Deprecate `no-index-together`
 - Drop support for python < 3.8
 - Drop support for django < 4.2
+- Add python 3.12 to test matrix
 
 ### 0.13.3
 

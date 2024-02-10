@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "Collection of useful checks for Django Checks Framework"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 authors = [
     { name = "Konstantin Alekseev", email = "mail@kalekseev.com" },
 ]
@@ -20,27 +20,22 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Web Environment",
     "Framework :: Django",
-    "Framework :: Django :: 3.2",
-    "Framework :: Django :: 4.0",
-    "Framework :: Django :: 4.1",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-]
-dependencies = [
-    "typing-extensions ; python_version < \"3.8\"",
+    "Programming Language :: Python :: 3.12",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "black",
     "Django",
     "django-stubs",
     "djangorestframework",
@@ -64,13 +59,14 @@ source = "vcs"
 raw-options = { local_scheme = "no-local-version" }
 
 [tool.hatch.build.targets.sdist]
-include = [
-    "/src",
-]
+include = ["/src"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/extra_checks"]
 
 [tool.ruff]
 src = ["src"]
-target-version = "py37"
+target-version = "py38"
+[tool.ruff.lint]
 select = [
   'B',
   'C',
@@ -81,7 +77,8 @@ select = [
   'UP',
   'RUF',
   'INP',
-  'I'
+  'I',
+  'TCH',
 ]
 ignore = [
   'E501',
@@ -89,10 +86,12 @@ ignore = [
   'B905',
   'RUF012',
 ]
+extend-safe-fixes = ["TCH"]
 
 [tool.pytest.ini_options]
 addopts = "-p no:doctest --cov=extra_checks --cov-branch --ds=tests.settings"
 django_find_project = false
+pythonpath = "."
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main"]

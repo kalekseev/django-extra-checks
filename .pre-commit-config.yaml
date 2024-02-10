@@ -5,12 +5,15 @@ repos:
       - id: black
         types: [python]
 
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: v0.0.260
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.2.1
     hooks:
       - id: ruff
         language: system
         args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+        language: system
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
@@ -28,12 +31,12 @@ repos:
       - id: mypy
         name: mypy
         language: system
-        entry: env PYTHONPATH=src mypy
+        entry: mypy
         args: [src/extra_checks, tests]
         pass_filenames: false
       - id: django-check
         name: django check
         language: system
-        entry: env PYTHONPATH=src DJANGO_SETTINGS_MODULE=tests.settings django-admin
+        entry: env PYTHONPATH=src:. DJANGO_SETTINGS_MODULE=tests.settings django-admin
         args: [check, --fail-level, CRITICAL]
         pass_filenames: false
