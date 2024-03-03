@@ -8,3 +8,7 @@ __pycache__
 /build
 /dist
 /.mypy_cache
+
+# Devenv
+.devenv*
+devenv.local.nix

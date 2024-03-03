@@ -21,8 +21,7 @@ class DisableCheckSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField()
 
     def method_with_meta_class(self):
-        class Meta:
-            ...
+        class Meta: ...
 
     # extra-checks-disable-next-line drf-model-serializer-extra-kwargs
     class Meta:

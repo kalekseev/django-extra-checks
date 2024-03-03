@@ -38,7 +38,7 @@ Collection of useful checks for Django Checks Frameworks
 
 Install with `pip install django-extra-checks`
 
-Add `extra_checks` to `INSTALLED_APPS` (use `extra_checks.apps.ExtraChecksConfig` for Django versions prior to 3.2).
+Add `extra_checks` to `INSTALLED_APPS`.
 
 ## Settings
 
