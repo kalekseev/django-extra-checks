@@ -80,8 +80,8 @@ _ChecksHandler = Callable[[Optional[List[Any]], Any], Iterator[Any]]
 
 class Registry:
     def __init__(self) -> None:
-        self.registered_checks: Dict["Type[BaseCheck]", Sequence[str]] = {}
-        self.enabled_checks: Dict[str, List["BaseCheck"]] = {}
+        self.registered_checks: Dict[Type[BaseCheck], Sequence[str]] = {}
+        self.enabled_checks: Dict[str, List[BaseCheck]] = {}
         self.ignored_checks: Dict[Any, Set[Union[CheckId, str]]] = {}
         self.handlers: Dict[str, _ChecksHandler] = {}
         self._config: Optional[ChecksConfig] = None
