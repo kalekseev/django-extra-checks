@@ -1,3 +1,4 @@
+import django
 import pytest
 
 from extra_checks.checks import model_checks, model_field_checks
@@ -137,7 +138,7 @@ def test_check_field_foreign_key_index(test_case):
         .run()
     )
     assert {m.obj.name for m in messages} == {
-        "field_one",
+        *(["field_one"] if django.VERSION < (5, 1) else []),
         "author",
         "field_three",
         "field_in_indexes",

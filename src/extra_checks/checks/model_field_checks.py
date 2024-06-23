@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from typing import Any, Iterator, Optional, Type
 
+import django
 import django.core.checks
 from django import forms
 from django.db import models
@@ -198,8 +199,9 @@ class CheckFieldForeignKeyIndex(CheckModelField):
     def get_index_values_in_meta(cls, model: Type[models.Model]) -> Iterator[str]:
         for entry in model._meta.unique_together:
             yield from entry
-        for entry in model._meta.index_together:
-            yield from entry
+        if django.VERSION < (5, 1):
+            for entry in model._meta.index_together:
+                yield from entry
         for constraint in model._meta.constraints:
             if isinstance(constraint, models.UniqueConstraint):
                 yield from constraint.fields

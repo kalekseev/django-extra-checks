@@ -96,14 +96,3 @@ def test_no_unique_together(test_case):
     )
     assert len(messages) == 1
     assert messages[0].id == model_checks.CheckNoUniqueTogether.Id.name
-
-
-def test_no_index_together(test_case):
-    messages = (
-        test_case.models(ModelFieldForeignKeyIndex)
-        .settings({"checks": [model_checks.CheckNoIndexTogether.Id.value]})
-        .check(model_checks.CheckNoIndexTogether)
-        .run()
-    )
-    assert len(messages) == 1
-    assert messages[0].id == model_checks.CheckNoIndexTogether.Id.name

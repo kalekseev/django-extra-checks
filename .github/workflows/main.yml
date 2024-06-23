@@ -35,6 +35,8 @@ jobs:
           - django-version: "Django>=5.0,<5.1"
             python-version: 3.9
           - django-version: "Django==5.1a1"
+            python-version: 3.8
+          - django-version: "Django==5.1a1"
             python-version: 3.9
           # - django-version: "https://github.com/django/django/archive/main.tar.gz"
           #   python-version: 3.8

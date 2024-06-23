@@ -10,7 +10,6 @@ Collection of useful checks for Django Checks Frameworks
 - **model-attribute** - Each Model in the project must have all attributes from `attrs` setting specified.
 - **model-meta-attribute** - Each Model.Meta in the project must have all attributes from `attrs` setting specified.
 - **no-unique-together** - Use `UniqueConstraint` with the `constraints` option instead.
-- **no-index-together** - [DEPRECATED] Use the `indexes` option instead.
 - **model-admin** - Each model must be registered in admin.
 - **field-file-upload-to** - `FileField` / `ImageField` must have non empty `upload_to` argument.
 - **field-verbose-name** - All model's fields must have verbose name.
@@ -18,7 +17,6 @@ Collection of useful checks for Django Checks Frameworks
 - **field-verbose-name-gettext-case** - Words in text wrapped with gettext must be in one case.
 - **field-help-text-gettext** - `help_text` must use gettext.
 - **field-text-null** - text fields shouldn't use `null=True`.
-- **field-boolean-null** - [DEPRECATED] prefer using `BooleanField(null=True)` instead of `NullBooleanField`.
 - **field-null** - don't pass `null=False` to model fields (this is django default).
 - **field-foreign-key-db-index** - ForeignKey fields must specify `db_index` explicitly (to apply only to fields in indexes: `when: indexes`).
 - **field-related-name** - Related fields must specify `related_name` explicitly.

@@ -179,17 +179,3 @@ class CheckNoUniqueTogether(CheckModelMeta):
                 "Use UniqueConstraint with the constraints option instead.",
                 obj=model,
             )
-
-
-@registry.register(django.core.checks.Tags.models)
-class CheckNoIndexTogether(CheckModelMeta):
-    Id = CheckId.X014
-    deprecation_warnings = [
-        "`no-index-together` check is deprecated and will be removed in a future version"
-    ]
-
-    def apply(
-        self, model: Type[models.Model], ast: ModelASTProtocol
-    ) -> Iterator[django.core.checks.CheckMessage]:
-        if ast.has_meta_var("index_together"):
-            yield self.message("Use the indexes option instead", obj=model)
