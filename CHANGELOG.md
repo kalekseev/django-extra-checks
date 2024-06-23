@@ -2,6 +2,8 @@
 
 ### Unreleased
 
+- chores: Add python3.13 and django5.1 to test matrix
+
 ### 0.14.1
 
 - fix(drf-serializer): IndexError on missing Meta attr, closes #34
