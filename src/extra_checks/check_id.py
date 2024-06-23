@@ -8,7 +8,7 @@ class CheckId(str, enum.Enum):
     X011 = "model-meta-attribute"
     X012 = "model-admin"
     X013 = "no-unique-together"
-    X014 = "no-index-together"
+    # X014 = "no-index-together" - removed
     X050 = "field-verbose-name"
     X051 = "field-verbose-name-gettext"
     X052 = "field-verbose-name-gettext-case"

@@ -44,7 +44,6 @@ def test_ignore_many_model_check(test_case):
                     model_field_checks.CheckFieldTextNull.Id.value,
                     model_field_checks.CheckFieldVerboseName.Id.value,
                     model_checks.CheckNoUniqueTogether.Id.value,
-                    model_checks.CheckNoIndexTogether.Id.value,
                 ]
             }
         )
@@ -52,7 +51,6 @@ def test_ignore_many_model_check(test_case):
             model_field_checks.CheckFieldTextNull,
             model_field_checks.CheckFieldVerboseName,
             model_checks.CheckNoUniqueTogether,
-            model_checks.CheckNoIndexTogether,
         )
         .run()
     )

@@ -2,7 +2,10 @@
 
 ### Unreleased
 
+### 0.15.0
+
 - chores: Add python3.13 and django5.1 to test matrix
+- chores: remove `no-index-together`
 
 ### 0.14.1
 

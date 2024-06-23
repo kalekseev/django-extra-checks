@@ -1,3 +1,4 @@
+import django
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
@@ -128,7 +129,8 @@ class ModelFieldForeignKeyIndex(models.Model):
 
     class Meta:
         unique_together = [("author", "article")]
-        index_together = ("field_one", "field_two")
+        if django.VERSION < (5, 1):
+            index_together = ("field_one", "field_two")
         constraints = [
             models.UniqueConstraint(
                 fields=("author", "field_three"), name="fi_author_field_unique"
@@ -231,4 +233,3 @@ class DisableManyChecksModel(models.Model):
     # extra-checks-disable-next-line no-unique-together
     class Meta:
         unique_together = ("text_fail", "text_fail2")
-        index_together = ("text_fail", "text_fail2")
