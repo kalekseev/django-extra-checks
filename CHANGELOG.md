@@ -2,6 +2,10 @@
 
 ### Unreleased
 
+### 0.14.1
+
+- fix(drf-serializer): IndexError on missing Meta attr, closes #34
+
 ### 0.14.0
 
 - Remove `field-boolean-null`

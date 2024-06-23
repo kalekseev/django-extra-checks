@@ -9,12 +9,20 @@ class ArticleSerializer(serializers.ModelSerializer):
         read_only_fields: list = []
 
 
+class InheritedArticleSerializer(ArticleSerializer):
+    pass
+
+
 class AuthorSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField()
 
     class Meta:
         model = Author
         extra_kwargs = {"first_name": {"read_only": True}}
+
+
+class InheritedAuthorSerializer(AuthorSerializer):
+    pass
 
 
 class DisableCheckSerializer(serializers.ModelSerializer):

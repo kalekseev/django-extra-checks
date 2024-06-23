@@ -15,6 +15,8 @@ from tests.example.serializers import (
     ArticleSerializer,
     AuthorSerializer,
     DisableCheckSerializer,
+    InheritedArticleSerializer,
+    InheritedAuthorSerializer,
 )
 
 
@@ -37,23 +39,25 @@ def test_model_serializer_extra_kwargs(test_case):
 
 
 def test_model_serializer_meta_attribute(test_case):
-    messages = (
-        test_case.settings(
-            {
-                "checks": [
-                    {
-                        "id": CheckDRFSerializerMetaAttribute.Id.value,
-                        "attrs": ["read_only_fields"],
-                    }
-                ]
-            }
-        )
-        .check(CheckDRFSerializerMetaAttribute)
-        .serializers(ArticleSerializer)
-        .run()
-    )
+    test_case.settings(
+        {
+            "checks": [
+                {
+                    "id": CheckDRFSerializerMetaAttribute.Id.value,
+                    "attrs": ["read_only_fields"],
+                }
+            ]
+        }
+    ).check(CheckDRFSerializerMetaAttribute)
+
+    messages = test_case.serializers(ArticleSerializer).run()
+    assert not messages
+    messages = test_case.serializers(InheritedArticleSerializer).run()
     assert not messages
     messages = test_case.serializers(AuthorSerializer).run()
+    assert len(messages) == 1
+    assert messages[0].id == CheckDRFSerializerMetaAttribute.Id.name
+    messages = test_case.serializers(InheritedAuthorSerializer).run()
     assert len(messages) == 1
     assert messages[0].id == CheckDRFSerializerMetaAttribute.Id.name
 

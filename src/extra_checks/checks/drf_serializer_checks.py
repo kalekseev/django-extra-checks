@@ -64,7 +64,7 @@ class DisableMetaCommentProvider(DisableCommentProvider):
                 ),
                 key=lambda a: a[1].find("class Meta"),
             )[0][0]
-        except StopIteration:
+        except (StopIteration, IndexError):
             return None
 
 
