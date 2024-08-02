@@ -87,7 +87,7 @@ class Registry:
         self._config: Optional[ChecksConfig] = None
 
     def _register(
-        self, tags: List[str], check_class: "Type[BaseCheck]"
+        self, tags: Sequence[str], check_class: "Type[BaseCheck]"
     ) -> "Type[BaseCheck]":
         self.registered_checks[check_class] = tags
         return check_class
@@ -105,7 +105,7 @@ class Registry:
     ) -> Optional[Callable]:
         if checks:
             f = partial(handler, checks, config)
-            django.core.checks.register(f, tag)  # type: ignore
+            django.core.checks.register(f, tag)  # pyright: ignore
             return f
         return None
 
