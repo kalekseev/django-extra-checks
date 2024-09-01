@@ -174,6 +174,7 @@ class ChoicesConstraint(models.Model):
     integer_blank_invalid = models.IntegerField(
         choices=[(1, "One"), (2, "Two")], blank=True, null=True
     )
+    url = models.URLField(blank=True, null=True)
 
     class Meta:
         constraints = [
@@ -198,6 +199,19 @@ class ChoicesConstraint(models.Model):
             models.CheckConstraint(
                 name="integer_blank_invalid",
                 check=models.Q(integer_blank_invalid__in=(1, 2, "")),
+            ),
+            models.CheckConstraint(
+                name="unrelated_constraint",
+                check=(
+                    models.Q(url=None)
+                    | (
+                        (
+                            models.Q(url__startswith="http://")
+                            | models.Q(url__startswith="https://")
+                        )
+                        & models.Q(url__length__lte=2000)
+                    )
+                ),
             ),
         ]
 
