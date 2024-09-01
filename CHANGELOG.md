@@ -2,6 +2,10 @@
 
 ### Unreleased
 
+### 0.15.1
+
+- fix check constraint parsing
+
 ### 0.15.0
 
 - chores: Add python3.13 and django5.1 to test matrix
