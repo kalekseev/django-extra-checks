@@ -36,7 +36,15 @@ Collection of useful checks for Django Checks Frameworks
 
 Install with `pip install django-extra-checks`
 
-Add `extra_checks` to `INSTALLED_APPS`.
+Add `extra_checks` to `INSTALLED_APPS` in your Django settings:
+```py
+INSTALLED_APPS = [
+    ...,
+    "django.contrib.admin",  # make sure this comes before 'extra_checks' if you plan to use the `model-admin` check
+    "extra_checks",
+    ...
+]
+```
 
 ## Settings
 
