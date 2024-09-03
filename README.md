@@ -101,7 +101,7 @@ def skipif_non_core_app(model_cls, *args, **kwargs):
     return model_cls._meta.app_label != "my_core_app"
 
 EXTRA_CHECKS = {
-    "check": [
+    "checks": [
         {
             "id": "field-verbose-name-gettext",
             # make this check skip wagtail's StreamField
