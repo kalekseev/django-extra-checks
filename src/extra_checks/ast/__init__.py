@@ -21,9 +21,9 @@ def get_model_ast(
 
 
 __all__ = [
-    "get_model_ast",
-    "MissingASTError",
     "ArgASTProtocol",
     "FieldASTProtocol",
+    "MissingASTError",
     "ModelASTProtocol",
+    "get_model_ast",
 ]
