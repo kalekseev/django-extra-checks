@@ -308,6 +308,6 @@ class CheckFieldChoicesConstraint(CheckModelField):
             check = f'models.Q({in_name}=[{", ".join([self._repr_choice(c) for c in field_choices])}])'
             yield self.message(
                 "Field with choices must have companion CheckConstraint to enforce choices on database level.",
-                hint=f'Add to Meta.constraints: `models.CheckConstraint(name="%(app_label)s_%(class)s_{field.name}_valid", check={check})`',
+                hint=f'Add to Meta.constraints: `models.CheckConstraint(name="%(app_label)s_%(class)s_{field.name}_valid", condition={check})`',
                 obj=field,
             )
