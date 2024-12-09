@@ -241,16 +241,18 @@ def test_field_choices_constraint(test_case):
         "blank_included",
         "integer_blank_invalid",
     }
-    assert 'check=models.Q(partial__in=["S", "C"]))' in errors["partial"].hint
-    assert "check=models.Q(missed__in=[1, 2]))" in errors["missed"].hint
+    arg_name = "condition" if django.VERSION >= (5, 1) else "check"
+    assert f'{arg_name}=models.Q(partial__in=["S", "C"]))' in errors["partial"].hint
+    assert f"{arg_name}=models.Q(missed__in=[1, 2]))" in errors["missed"].hint
     assert (
-        'check=models.Q(blank_missed__in=["A", "B", ""])' in errors["blank_missed"].hint
+        f'{arg_name}=models.Q(blank_missed__in=["A", "B", ""])'
+        in errors["blank_missed"].hint
     )
     assert (
-        'check=models.Q(blank_included__in=["A", "B", ""])'
+        f'{arg_name}=models.Q(blank_included__in=["A", "B", ""])'
         in errors["blank_included"].hint
     )
     assert (
-        "check=models.Q(integer_blank_invalid__in=[1, 2])"
+        f"{arg_name}=models.Q(integer_blank_invalid__in=[1, 2])"
         in errors["integer_blank_invalid"].hint
     )
