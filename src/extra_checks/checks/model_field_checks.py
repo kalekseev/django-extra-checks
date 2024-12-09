@@ -295,10 +295,15 @@ class CheckFieldChoicesConstraint(CheckModelField):
                 field_choices.append("")
             in_name = f"{field.name}__in"
             for constraint in model._meta.constraints:
-                if isinstance(constraint, models.CheckConstraint) and isinstance(
-                    constraint.check, models.Q
-                ):
-                    for entry in constraint.check.children:
+                if isinstance(constraint, models.CheckConstraint):
+                    condition = (
+                        constraint.check
+                        if django.VERSION < (5, 1)
+                        else constraint.condition
+                    )
+                    if not isinstance(condition, models.Q):
+                        continue
+                    for entry in condition.children:
                         if (
                             isinstance(entry, tuple)
                             and entry[0] == in_name
