@@ -2,6 +2,10 @@
 
 ### Unreleased
 
+### 0.16.1
+
+- fix `field-choices-constraint`
+
 ### 0.16.0
 
 - `field-choices-constraint` hint message uses `condition` on django 5.1
