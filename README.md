@@ -126,7 +126,7 @@ EXTRA_CHECKS = {
 
 ## Development
 
-Install dev deps in virtualenv `uv sync --group test`.
+Install dev deps in virtualenv `uv sync`, run tests `uv run pytest`.
 
 ## Credits
 
