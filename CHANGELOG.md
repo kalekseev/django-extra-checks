@@ -2,6 +2,8 @@
 
 ### Unreleased
 
+### 0.17.0a1
+
 - drop python 3.8 support
 - add django 5.2 to test matrix
 
