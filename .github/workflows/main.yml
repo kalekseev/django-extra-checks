@@ -83,17 +83,10 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: "pip"
-          cache-dependency-path: "pyproject.toml"
-      - name: Install dependencies
-        run: |
-          python -m pip install hatch
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
       - name: Package
-        run: python -m hatch build
+        run: uv build
       - name: Upload dist
         uses: actions/upload-artifact@v4
         with:
@@ -105,6 +98,10 @@ jobs:
     needs: [package, tests, lint]
     if: startsWith(github.ref, 'refs/tags/v')
     timeout-minutes: 5
+    environment: release
+    permissions:
+      id-token: write
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Set release env
@@ -129,15 +126,8 @@ jobs:
         with:
           name: dist
           path: dist
-      - name: Install dependencies
-        run: |
-          python -m pip install twine
-      - name: Publish
-        env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          twine upload dist/*
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v2
