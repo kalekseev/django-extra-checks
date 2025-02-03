@@ -1,6 +1,7 @@
 import site
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, Iterable, Iterator, List, Optional, Type, Union
+from collections.abc import Iterable, Iterator
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import django.core.checks
 from django import forms
@@ -21,9 +22,9 @@ if TYPE_CHECKING:
 
 def _get_models_to_check(
     *,
-    app_configs: Optional[List[Any]] = None,
+    app_configs: Optional[list[Any]] = None,
     include_apps: Optional[Iterable[str]] = None,
-) -> Iterator[Type[models.Model]]:
+) -> Iterator[type[models.Model]]:
     apps = django.apps.apps.get_app_configs() if app_configs is None else app_configs
     if include_apps is not None:
         for app in apps:
@@ -39,10 +40,10 @@ def _get_models_to_check(
 def check_models(
     checks: Iterable[Union["CheckModel", "CheckModelField", "CheckModelMeta"]],
     config: ChecksConfig,
-    app_configs: Optional[List[Any]] = None,
+    app_configs: Optional[list[Any]] = None,
     **kwargs: Any,
 ) -> Iterator[Any]:
-    model_checks: List[Union[CheckModel, CheckModelMeta]] = []
+    model_checks: list[Union[CheckModel, CheckModelMeta]] = []
     field_checks = []
     meta_checks = []
     for check in checks:
@@ -70,7 +71,7 @@ def check_models(
 class CheckModel(BaseCheck):
     @abstractmethod
     def apply(
-        self, model: Type[models.Model], ast: ModelASTProtocol
+        self, model: type[models.Model], ast: ModelASTProtocol
     ) -> Iterator[django.core.checks.CheckMessage]:
         raise NotImplementedError()
 
@@ -78,7 +79,7 @@ class CheckModel(BaseCheck):
 class CheckModelMeta(BaseCheck):
     @abstractmethod
     def apply(
-        self, model: Type[models.Model], ast: ModelASTProtocol
+        self, model: type[models.Model], ast: ModelASTProtocol
     ) -> Iterator[django.core.checks.CheckMessage]:
         raise NotImplementedError()
 
@@ -88,12 +89,12 @@ class CheckModelAttribute(CheckModel):
     Id = CheckId.X010
     settings_form_class = AttrsForm
 
-    def __init__(self, attrs: List[str], **kwargs: Any) -> None:
+    def __init__(self, attrs: list[str], **kwargs: Any) -> None:
         self.attrs = attrs
         super().__init__(**kwargs)
 
     def apply(
-        self, model: Type[models.Model], ast: ModelASTProtocol
+        self, model: type[models.Model], ast: ModelASTProtocol
     ) -> Iterator[django.core.checks.CheckMessage]:
         for attr in self.attrs:
             if (
@@ -117,12 +118,12 @@ class CheckModelMetaAttribute(CheckModelMeta):
 
     settings_form_class = MetaAttrsForm
 
-    def __init__(self, attrs: List[str], **kwargs: Any) -> None:
+    def __init__(self, attrs: list[str], **kwargs: Any) -> None:
         self.attrs = attrs
         super().__init__(**kwargs)
 
     def apply(
-        self, model: Type[models.Model], ast: ModelASTProtocol
+        self, model: type[models.Model], ast: ModelASTProtocol
     ) -> Iterator[django.core.checks.CheckMessage]:
         for attr in self.attrs:
             if (
@@ -161,7 +162,7 @@ class CheckModelAdmin(CheckModel):
                     self.models_with_admin.add(inline.model)
 
     def apply(
-        self, model: Type[models.Model], ast: ModelASTProtocol
+        self, model: type[models.Model], ast: ModelASTProtocol
     ) -> Iterator[django.core.checks.CheckMessage]:
         if model not in self.models_with_admin:
             yield self.message("The model is not registered in admin.", obj=model)
@@ -172,7 +173,7 @@ class CheckNoUniqueTogether(CheckModelMeta):
     Id = CheckId.X013
 
     def apply(
-        self, model: Type[models.Model], ast: ModelASTProtocol
+        self, model: type[models.Model], ast: ModelASTProtocol
     ) -> Iterator[django.core.checks.CheckMessage]:
         if ast.has_meta_var("unique_together"):
             yield self.message(

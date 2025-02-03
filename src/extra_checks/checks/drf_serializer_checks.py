@@ -1,15 +1,11 @@
 import importlib
 import site
 from abc import abstractmethod
+from collections.abc import Iterable, Iterator
 from typing import (
     TYPE_CHECKING,
     Any,
-    Iterable,
-    Iterator,
-    List,
     Optional,
-    Tuple,
-    Type,
     Union,
     cast,
 )
@@ -32,7 +28,7 @@ else:
 
 
 class DisableCommentProvider(DisableCommentProtocol):
-    def __init__(self, serializer_class: Type[Serializer]):
+    def __init__(self, serializer_class: type[Serializer]):
         self.serializer_class = serializer_class
 
     @cached_property
@@ -69,9 +65,9 @@ class DisableMetaCommentProvider(DisableCommentProvider):
 
 
 def _filter_app_serializers(
-    serializers: Iterable[Type[Serializer]],
+    serializers: Iterable[type[Serializer]],
     include_apps: Optional[Iterable[str]] = None,
-) -> Iterator[Type[Serializer]]:
+) -> Iterator[type[Serializer]]:
     site_prefixes = set(site.PREFIXES)
     if include_apps is not None:
         app_paths = {
@@ -96,7 +92,7 @@ def _filter_app_serializers(
 
 def _get_serializers_to_check(
     include_apps: Optional[Iterable[str]] = None,
-) -> Tuple[Iterator[Type[Serializer]], Iterator[Type[ModelSerializer]]]:
+) -> tuple[Iterator[type[Serializer]], Iterator[type[ModelSerializer]]]:
     serializer_classes = _filter_app_serializers(
         collect_subclasses(
             s for s in Serializer.__subclasses__() if s is not ModelSerializer
@@ -108,7 +104,7 @@ def _get_serializers_to_check(
     )
     return (
         serializer_classes,
-        cast(Iterator[Type[ModelSerializer]], model_serializer_classes),
+        cast(Iterator[type[ModelSerializer]], model_serializer_classes),
     )
 
 
@@ -122,7 +118,7 @@ def check_drf_serializers(
         ]
     ],
     config: ChecksConfig,
-    app_configs: Optional[List[Any]] = None,
+    app_configs: Optional[list[Any]] = None,
     **kwargs: Any,
 ) -> Iterator[Any]:
     model_serializer_checks = []
@@ -199,7 +195,7 @@ class CheckDRFSerializerMetaAttribute(CheckDRFModelSerializerMeta):
     Id = CheckId.X302
     settings_form_class = AttrsForm
 
-    def __init__(self, attrs: List[str], **kwargs: Any) -> None:
+    def __init__(self, attrs: list[str], **kwargs: Any) -> None:
         self.attrs = attrs
         super().__init__(**kwargs)
 

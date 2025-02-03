@@ -17,15 +17,16 @@
       let
         pkgs = import nixpkgs { inherit system; };
         app-test = pkgs.writeShellScriptBin "app.test" ''pytest $@'';
-        app-install = pkgs.writeShellScriptBin "app.install" ''uv pip install -e .[dev,test] && pre-commit install'';
+        app-install = pkgs.writeShellScriptBin "app.install" ''uv sync && pre-commit install'';
         app-typecheck = pkgs.writeShellScriptBin "app.typecheck" ''mypy src/extra_checks tests'';
         app-lint = pkgs.writeShellScriptBin "app.lint" ''pre-commit run -a'';
       in
       {
         devShells.default = pkgs.mkShell {
           packages = [
-            pkgs.python312
+            pkgs.python313
             pkgs.pre-commit
+            pkgs.uv
           ];
           buildInputs = [
             app-test

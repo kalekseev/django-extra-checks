@@ -1,4 +1,5 @@
-from typing import Any, Iterable, Iterator, List, Optional
+from collections.abc import Iterable, Iterator
+from typing import Any, Optional
 
 import django.core.checks
 
@@ -11,7 +12,7 @@ from .base_checks import BaseCheck
 def check_extra_checks_health(
     checks: Iterable["CheckConfig"],
     config: ChecksConfig,
-    app_configs: Optional[List[Any]] = None,
+    app_configs: Optional[list[Any]] = None,
     **kwargs: Any,
 ) -> Iterator[django.core.checks.CheckMessage]:
     for check in checks:
@@ -23,12 +24,12 @@ def dict_to_text(data: dict, indent_level: int = 0) -> str:
     for field, errors in data.items():
         if not errors:
             continue
-        output.append(f"{' '*indent_level * 2}* {field}")
+        output.append(f"{' ' * indent_level * 2}* {field}")
         if isinstance(errors, dict):
             output.append(dict_to_text(errors, indent_level + 1))
         else:
             output.append(
-                "\n".join(f"{' '*(indent_level * 2 + 2)}* {e}" for e in errors)
+                "\n".join(f"{' ' * (indent_level * 2 + 2)}* {e}" for e in errors)
             )
     return "\n".join(output)
 

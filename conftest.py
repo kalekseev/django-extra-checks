@@ -35,9 +35,9 @@ class TestCase:
     def run(self):
         self._registry.enabled_checks = {}
         handlers = self._registry.bind()
-        assert (
-            self._registry.is_healthy
-        ), f"Settings has errors: {self._registry._config.errors.as_text()}"
+        assert self._registry.is_healthy, (
+            f"Settings has errors: {self._registry._config.errors.as_text()}"
+        )
         return list(handlers[self.TEST_TAG]())
 
     def models(self, *models):

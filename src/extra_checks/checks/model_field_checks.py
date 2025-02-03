@@ -1,5 +1,6 @@
 from abc import abstractmethod
-from typing import Any, Iterator, Optional, Type
+from collections.abc import Iterator
+from typing import Any, Optional
 
 import django
 import django.core.checks
@@ -21,7 +22,7 @@ class CheckModelField(BaseCheck):
         field: models.fields.Field,
         *,
         ast: FieldASTProtocol,
-        model: Type[models.Model],
+        model: type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
         raise NotImplementedError()
 
@@ -196,7 +197,7 @@ class CheckFieldForeignKeyIndex(CheckModelField):
         super().__init__(**kwargs)
 
     @classmethod
-    def get_index_values_in_meta(cls, model: Type[models.Model]) -> Iterator[str]:
+    def get_index_values_in_meta(cls, model: type[models.Model]) -> Iterator[str]:
         for entry in model._meta.unique_together:
             yield from entry
         if django.VERSION < (5, 1):
@@ -210,7 +211,7 @@ class CheckFieldForeignKeyIndex(CheckModelField):
 
     @classmethod
     def get_fields_with_indexes_in_meta(
-        cls, model: Type[models.Model]
+        cls, model: type[models.Model]
     ) -> Iterator[str]:
         for entry in cls.get_index_values_in_meta(model):
             yield entry.lstrip("-")
@@ -219,7 +220,7 @@ class CheckFieldForeignKeyIndex(CheckModelField):
         self,
         field: models.fields.Field,
         ast: FieldASTProtocol,
-        model: Type[models.Model],
+        model: type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, models.fields.related.RelatedField):
             if field.many_to_one and not ast.get_arg("db_index"):
@@ -246,7 +247,7 @@ class CheckFieldRelatedName(CheckModelField):
         self,
         field: models.fields.Field,
         ast: FieldASTProtocol,
-        model: Type[models.Model],
+        model: type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, models.fields.related.RelatedField):
             if not field.remote_field.related_name:
@@ -286,7 +287,7 @@ class CheckFieldChoicesConstraint(CheckModelField):
         self,
         field: models.fields.Field,
         ast: FieldASTProtocol,
-        model: Type[models.Model],
+        model: type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
         choices = field.flatchoices
         if choices:
@@ -310,7 +311,7 @@ class CheckFieldChoicesConstraint(CheckModelField):
                             and set(field_choices) == set(entry[1])
                         ):
                             return
-            check = f'models.Q({in_name}=[{", ".join([self._repr_choice(c) for c in field_choices])}])'
+            check = f"models.Q({in_name}=[{', '.join([self._repr_choice(c) for c in field_choices])}])"
             arg_name = "condition" if django.VERSION >= (5, 1) else "check"
             yield self.message(
                 "Field with choices must have companion CheckConstraint to enforce choices on database level.",

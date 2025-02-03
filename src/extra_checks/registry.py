@@ -1,17 +1,10 @@
+from collections.abc import Iterable, Iterator, Sequence
 from functools import partial
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
     Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
     Union,
 )
 
@@ -31,20 +24,20 @@ class ChecksConfig:
         self,
         *,
         errors: Optional[dict] = None,
-        checks: Optional[Dict[CheckId, dict]] = None,
+        checks: Optional[dict[CheckId, dict]] = None,
         include_apps: Optional[Iterable[str]] = None,
-        ignored_objects: Optional[Dict[CheckId, Set[Any]]] = None,
+        ignored_objects: Optional[dict[CheckId, set[Any]]] = None,
     ) -> None:
-        self.checks: Dict[CheckId, dict] = {**(checks or {}), CheckId.X001: {}}
+        self.checks: dict[CheckId, dict] = {**(checks or {}), CheckId.X001: {}}
         self.include_apps = include_apps
         self.errors = errors
-        self.ignored_objects: Dict[CheckId, set] = ignored_objects or {}
+        self.ignored_objects: dict[CheckId, set] = ignored_objects or {}
 
     @classmethod
     def create(
         cls,
-        include_checks: Dict["Type[BaseCheck]", Sequence[str]],
-        ignore_checks: Optional[Dict[Any, Set[Union[str, CheckId]]]] = None,
+        include_checks: dict["type[BaseCheck]", Sequence[str]],
+        ignore_checks: Optional[dict[Any, set[Union[str, CheckId]]]] = None,
     ) -> "ChecksConfig":
         check_forms = {r.Id: r.settings_form_class for r in include_checks}
         if not hasattr(settings, "EXTRA_CHECKS"):
@@ -59,10 +52,10 @@ class ChecksConfig:
 
     @staticmethod
     def _build_ignored(
-        ignore_checks: Dict[Any, Set[Union[str, CheckId]]],
-    ) -> Tuple[Dict[CheckId, Set[Any]], List[str]]:
+        ignore_checks: dict[Any, set[Union[str, CheckId]]],
+    ) -> tuple[dict[CheckId, set[Any]], list[str]]:
         errors = []
-        ignored: Dict[CheckId, set] = {}
+        ignored: dict[CheckId, set] = {}
         for obj, ids in ignore_checks.items():
             for id_ in ids:
                 check_id = CheckId.find_check(id_)
@@ -75,20 +68,20 @@ class ChecksConfig:
         return ignored, errors
 
 
-_ChecksHandler = Callable[[Optional[List[Any]], Any], Iterator[Any]]
+_ChecksHandler = Callable[[Optional[list[Any]], Any], Iterator[Any]]
 
 
 class Registry:
     def __init__(self) -> None:
-        self.registered_checks: Dict[Type[BaseCheck], Sequence[str]] = {}
-        self.enabled_checks: Dict[str, List[BaseCheck]] = {}
-        self.ignored_checks: Dict[Any, Set[Union[CheckId, str]]] = {}
-        self.handlers: Dict[str, _ChecksHandler] = {}
+        self.registered_checks: dict[type[BaseCheck], Sequence[str]] = {}
+        self.enabled_checks: dict[str, list[BaseCheck]] = {}
+        self.ignored_checks: dict[Any, set[Union[CheckId, str]]] = {}
+        self.handlers: dict[str, _ChecksHandler] = {}
         self._config: Optional[ChecksConfig] = None
 
     def _register(
-        self, tags: Sequence[str], check_class: "Type[BaseCheck]"
-    ) -> "Type[BaseCheck]":
+        self, tags: Sequence[str], check_class: "type[BaseCheck]"
+    ) -> "type[BaseCheck]":
         self.registered_checks[check_class] = tags
         return check_class
 
@@ -100,7 +93,7 @@ class Registry:
         self,
         tag: str,
         handler: _ChecksHandler,
-        checks: List["BaseCheck"],
+        checks: list["BaseCheck"],
         config: ChecksConfig,
     ) -> Optional[Callable]:
         if checks:
@@ -109,13 +102,13 @@ class Registry:
             return f
         return None
 
-    def register(self, *tags: str) -> Callable[["Type[BaseCheck]"], "Type[BaseCheck]"]:
+    def register(self, *tags: str) -> Callable[["type[BaseCheck]"], "type[BaseCheck]"]:
         return partial(self._register, tags)
 
     def add_handler(self, tag: str) -> Callable[[Callable], Callable]:
         return partial(self._add_handler, tag)
 
-    def bind(self) -> Dict[str, Callable]:
+    def bind(self) -> dict[str, Callable]:
         config = ChecksConfig.create(self.registered_checks, self.ignored_checks)
         for check_class, tags in self.registered_checks.items():
             if check_class.Id in config.checks:

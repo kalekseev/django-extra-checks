@@ -1,12 +1,13 @@
-from typing import Iterable, Iterator, Optional, Set, Type, TypeVar
+from collections.abc import Iterable, Iterator
+from typing import Optional, TypeVar
 
 TBase = TypeVar("TBase")
 
 
 def collect_subclasses(
-    bases: Iterable[Type[TBase]],
-    visited: Optional[Set[Type[TBase]]] = None,
-) -> Iterator[Type[TBase]]:
+    bases: Iterable[type[TBase]],
+    visited: Optional[set[type[TBase]]] = None,
+) -> Iterator[type[TBase]]:
     visited = visited or set()
     for cls in bases:
         if cls not in visited:

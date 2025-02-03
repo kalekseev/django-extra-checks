@@ -1,16 +1,10 @@
 import ast
+from collections.abc import Container, Iterable, Iterator
 from functools import partial
 from typing import (
     TYPE_CHECKING,
     Callable,
-    Container,
-    Dict,
-    Iterable,
-    Iterator,
-    List,
     Optional,
-    Tuple,
-    Type,
     Union,
     cast,
 )
@@ -36,10 +30,10 @@ else:
 
 
 class ModelAST(DisableCommentProtocol, ModelASTProtocol):
-    def __init__(self, model_cls: Type[models.Model], meta_checks: Container[CheckId]):
+    def __init__(self, model_cls: type[models.Model], meta_checks: Container[CheckId]):
         self.model_cls = model_cls
         self.meta_checks = meta_checks
-        self._assignment_nodes: List[ast.Assign] = []
+        self._assignment_nodes: list[ast.Assign] = []
         self._meta: Optional[ast.ClassDef] = None
 
     @cached_property
@@ -73,8 +67,8 @@ class ModelAST(DisableCommentProtocol, ModelASTProtocol):
         return self._meta
 
     @cached_property
-    def _meta_vars(self) -> Dict[str, ast.Assign]:
-        data: Dict[str, ast.Assign] = {}
+    def _meta_vars(self) -> dict[str, ast.Assign]:
+        data: dict[str, ast.Assign] = {}
         if not self._meta_node:
             return data
         for node in ast.iter_child_nodes(self._meta_node):
@@ -83,7 +77,7 @@ class ModelAST(DisableCommentProtocol, ModelASTProtocol):
         return data
 
     @cached_property
-    def _assignments(self) -> Dict[str, ast.Assign]:
+    def _assignments(self) -> dict[str, ast.Assign]:
         self._parse()
         result = {}
         for node in self._assignment_nodes:
@@ -92,7 +86,7 @@ class ModelAST(DisableCommentProtocol, ModelASTProtocol):
         return result
 
     @cached_property
-    def field_nodes(self) -> Iterable[Tuple[models.fields.Field, "FieldAST"]]:
+    def field_nodes(self) -> Iterable[tuple[models.fields.Field, "FieldAST"]]:
         for field in self.model_cls._meta.get_fields(include_parents=False):
             if isinstance(field, models.Field):
                 yield (
@@ -155,11 +149,11 @@ class FieldAST(DisableCommentProtocol, FieldASTProtocol):
         self._source_provider = source_provider
 
     @cached_property
-    def _args(self) -> List[ast.expr]:
+    def _args(self) -> list[ast.expr]:
         return self._node.value.args  # type: ignore
 
     @cached_property
-    def _kwargs(self) -> Dict[str, ast.keyword]:
+    def _kwargs(self) -> dict[str, ast.keyword]:
         return {kw.arg: kw for kw in self._node.value.keywords if kw.arg}  # type: ignore
 
     def get_arg(self, name: str) -> Optional[ArgASTProtocol]:

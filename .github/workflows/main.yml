@@ -19,11 +19,12 @@ jobs:
     strategy:
       matrix:
         # https://github.com/actions/python-versions/blob/main/versions-manifest.json
-        python-version: [3.8, 3.9, "3.10", "3.11", "3.12", "3.13"]
+        python-version: [3.9, "3.10", "3.11", "3.12", "3.13"]
         django-version:
           - "Django>=4.2,<5.0"
           - "Django>=5.0,<5.1"
           - "Django>=5.1,<5.2"
+          - "Django==5.2a1"
           # - "https://github.com/django/django/archive/main.tar.gz"
         include:
           - drf: djangorestframework
@@ -31,12 +32,10 @@ jobs:
             django-version: "Django<5.2,>=5.0" # must be different from django-version
         exclude:
           - django-version: "Django>=5.0,<5.1"
-            python-version: 3.8
-          - django-version: "Django>=5.0,<5.1"
             python-version: 3.9
           - django-version: "Django>=5.1,<5.2"
-            python-version: 3.8
-          - django-version: "Django>=5.1,<5.2"
+            python-version: 3.9
+          - django-version: "Django==5.2a1"
             python-version: 3.9
           # - django-version: "https://github.com/django/django/archive/main.tar.gz"
           #   python-version: 3.8
@@ -46,16 +45,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        if: "!endsWith(matrix.python-version, '-dev')"
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "pip"
-          cache-dependency-path: "pyproject.toml"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Patch pyproject.toml
+        if: "matrix.python-version != '3.9'"
+        run: |
+          sed -i 's/requires-python = ">=3.9"/requires-python = ">=3.10"/' pyproject.toml
       - name: Install deps
         run: |
-          python -m pip install -e .[test]
-          python -m pip install "${{ matrix.django-version }}" ${{ matrix.drf }}
-      - run: pytest
+          uv add --group test "${{ matrix.django-version }}" ${{ matrix.drf }}
+          uv sync --no-dev --group test
+      - run: uv run pytest
 
   lint:
     runs-on: ubuntu-latest
@@ -67,14 +69,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
-          cache-dependency-path: "pyproject.toml"
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
-      - run: python -m pip install -e .[dev]
-      - run: pre-commit run --show-diff-on-failure --color=always --all-files
+      - run: uv sync
+      - run: uv run pre-commit run --show-diff-on-failure --color=always --all-files
 
   package:
     runs-on: ubuntu-latest
