@@ -126,7 +126,7 @@ EXTRA_CHECKS = {
 
 ## Development
 
-Install dev deps in virtualenv `pip install -e .[dev,test]`.
+Install dev deps in virtualenv `uv sync --group test`.
 
 ## Credits
 

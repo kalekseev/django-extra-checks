@@ -1,4 +1,4 @@
-from typing import Container, Type
+from collections.abc import Container
 
 from django.db import models
 
@@ -14,7 +14,7 @@ from .protocols import (
 
 
 def get_model_ast(
-    model_cls: Type[models.Model],
+    model_cls: type[models.Model],
     meta_checks: Container[CheckId],
 ) -> ModelASTDisableCommentProtocol:
     return ModelAST(model_cls, meta_checks)

@@ -1,15 +1,12 @@
 import warnings
 from abc import ABC, abstractmethod
+from collections.abc import Iterator
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
     ClassVar,
-    Iterator,
-    List,
     Optional,
-    Set,
-    Type,
 )
 
 import django.core.checks
@@ -28,14 +25,14 @@ MESSAGE_MAP = {
 
 class BaseCheck(ABC):
     Id: CheckId
-    settings_form_class: ClassVar[Type[forms.BaseCheckForm]] = forms.BaseCheckForm
+    settings_form_class: ClassVar[type[forms.BaseCheckForm]] = forms.BaseCheckForm
     level = django.core.checks.WARNING
-    deprecation_warnings: List[str] = []
+    deprecation_warnings: list[str] = []
 
     def __init__(
         self,
         level: Optional[int] = None,
-        ignore_objects: Optional[Set[Any]] = None,
+        ignore_objects: Optional[set[Any]] = None,
         ignore_types: Optional[set] = None,
         skipif: Optional[Callable] = None,
     ) -> None:

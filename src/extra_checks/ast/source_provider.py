@@ -1,7 +1,8 @@
 import inspect
 import re
 import textwrap
-from typing import TYPE_CHECKING, Dict, Iterable, Optional, Set, Type
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Optional
 
 from extra_checks.check_id import ALL_CHECKS_NAMES, CheckId
 
@@ -14,7 +15,7 @@ else:
 DISABLE_COMMENT_PATTERN = r"^#\s*extra-checks-disable-next-line(?:\s+(.*))?$"
 
 
-def _parse_comment(checks: Optional[str]) -> Set[str]:
+def _parse_comment(checks: Optional[str]) -> set[str]:
     if not checks:
         return ALL_CHECKS_NAMES  # type: ignore
     result = set()
@@ -25,7 +26,7 @@ def _parse_comment(checks: Optional[str]) -> Set[str]:
     return result
 
 
-def _find_disabled_checks(comments: Iterable[str]) -> Set[str]:
+def _find_disabled_checks(comments: Iterable[str]) -> set[str]:
     result = set()
     for line in comments:
         m = re.match(DISABLE_COMMENT_PATTERN, line)
@@ -35,9 +36,9 @@ def _find_disabled_checks(comments: Iterable[str]) -> Set[str]:
 
 
 class SourceProvider:
-    def __init__(self, obj: Type) -> None:
+    def __init__(self, obj: type) -> None:
         self._obj = obj
-        self._comments_cache: Dict[int, Set[str]] = {}
+        self._comments_cache: dict[int, set[str]] = {}
 
     @cached_property
     def source(self) -> Optional[str]:
@@ -63,7 +64,7 @@ class SourceProvider:
             else:
                 break
 
-    def get_disabled_checks_for_line(self, line_no: int) -> Set[str]:
+    def get_disabled_checks_for_line(self, line_no: int) -> set[str]:
         if line_no not in self._comments_cache:
             comments = self._get_line_comments(line_no)
             self._comments_cache[line_no] = _find_disabled_checks(comments)

@@ -55,7 +55,7 @@ class UnionField(forms.Field):
     }
 
     def __init__(
-        self, base_fields: typing.Dict[typing.Any, forms.Field], **kwargs: typing.Any
+        self, base_fields: dict[typing.Any, forms.Field], **kwargs: typing.Any
     ) -> None:
         assert isinstance(base_fields, dict)
         self.base_fields = base_fields
@@ -85,9 +85,7 @@ class DictField(forms.ChoiceField):
         "id_required": _("`id` field is required."),
     }
 
-    def __init__(
-        self, id_choices: typing.List[typing.Tuple[str, str]], **kwargs: typing.Any
-    ) -> None:
+    def __init__(self, id_choices: list[tuple[str, str]], **kwargs: typing.Any) -> None:
         super().__init__(choices=id_choices, **kwargs)
 
     def to_python(self, value: typing.Any) -> dict:
@@ -145,8 +143,8 @@ class ConfigForm(forms.Form):
         required=False,
     )
 
-    def clean_checks(self) -> typing.Dict[str, dict]:
-        result: typing.Dict[str, dict] = {}
+    def clean_checks(self) -> dict[str, dict]:
+        result: dict[str, dict] = {}
         for check in self.cleaned_data["checks"]:
             if isinstance(check, str):
                 result[check] = {}
@@ -154,7 +152,7 @@ class ConfigForm(forms.Form):
                 result[check["id"]] = check
         return result
 
-    def clean(self) -> typing.Dict[str, typing.Any]:
+    def clean(self) -> dict[str, typing.Any]:
         if (
             "include_apps" in self.cleaned_data
             and not self.cleaned_data["include_apps"]
@@ -168,7 +166,7 @@ class ConfigForm(forms.Form):
         return self.cleaned_data
 
     def is_valid(  # type: ignore
-        self, check_forms: typing.Dict[CheckId, "typing.Type[BaseCheckForm]"]
+        self, check_forms: dict[CheckId, "type[BaseCheckForm]"]
     ) -> bool:
         if not super().is_valid():
             return False
@@ -199,7 +197,7 @@ class BaseCheckForm(forms.Form):
             return getattr(django.core.checks, self.cleaned_data["level"])
         return None
 
-    def clean(self) -> typing.Dict[str, typing.Any]:
+    def clean(self) -> dict[str, typing.Any]:
         if "skipif" in self.cleaned_data and not self.cleaned_data["skipif"]:
             del self.cleaned_data["skipif"]
         return self.cleaned_data
