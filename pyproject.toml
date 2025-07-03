@@ -47,6 +47,8 @@ dev = [
     "pre-commit",
     "ruff",
     {include-group = "test"},
+    "pyright>=1.1.402",
+    "ty>=0.0.1a13",
 ]
 test = [
     "pytest",

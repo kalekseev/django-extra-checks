@@ -25,13 +25,13 @@ def _get_models_to_check(
     app_configs: Optional[list[Any]] = None,
     include_apps: Optional[Iterable[str]] = None,
 ) -> Iterator[type[models.Model]]:
-    apps = django.apps.apps.get_app_configs() if app_configs is None else app_configs
+    apps_ = apps.get_app_configs() if app_configs is None else app_configs
     if include_apps is not None:
-        for app in apps:
+        for app in apps_:
             if app.name in include_apps:
                 yield from app.get_models()
         return
-    for app in apps:
+    for app in apps_:
         if not any(app.path.startswith(path) for path in set(site.PREFIXES)):
             yield from app.get_models()
 

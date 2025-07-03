@@ -11,6 +11,7 @@ from typing import (
 )
 
 import django.core.checks
+from django.apps import apps
 from rest_framework.serializers import ModelSerializer, Serializer
 
 from ..ast.protocols import DisableCommentProtocol
@@ -70,9 +71,7 @@ def _filter_app_serializers(
 ) -> Iterator[type[Serializer]]:
     site_prefixes = set(site.PREFIXES)
     if include_apps is not None:
-        app_paths = {
-            a.path for a in django.apps.apps.get_app_configs() if a.name in include_apps
-        }
+        app_paths = {a.path for a in apps.get_app_configs() if a.name in include_apps}
         for s in serializers:
             module = importlib.import_module(s.__module__)
             if any(
@@ -104,7 +103,7 @@ def _get_serializers_to_check(
     )
     return (
         serializer_classes,
-        cast(Iterator[type[ModelSerializer]], model_serializer_classes),
+        cast("Iterator[type[ModelSerializer]]", model_serializer_classes),  # ty: ignore[redundant-cast]
     )
 
 

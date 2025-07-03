@@ -31,7 +31,7 @@ class CheckId(str, enum.Enum):
         except ValueError:
             pass
         try:
-            return cast(CheckId, cls._member_map_[value])
+            return cast("CheckId", cls._member_map_[value])
         except KeyError:
             pass
         return None
