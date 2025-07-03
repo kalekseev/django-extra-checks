@@ -1,12 +1,18 @@
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.1
+  - repo: local
     hooks:
       - id: ruff
+        name: ruff
+        entry: ruff check --force-exclude --fix --exit-non-zero-on-fix
         language: system
-        args: [--fix, --exit-non-zero-on-fix]
+        types_or: [python]
+        require_serial: true
       - id: ruff-format
+        name: ruff-format
+        entry: ruff format --force-exclude
         language: system
+        types: [python]
+        require_serial: true
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

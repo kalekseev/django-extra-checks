@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 from typing import Any, Optional, Protocol
 
-from django.db import models
+from django.db.models.fields import Field
 
 
 class ArgASTProtocol(Protocol):
@@ -22,7 +22,7 @@ class ModelASTProtocol(Protocol):
     @property
     def field_nodes(
         self,
-    ) -> Iterable[tuple[models.fields.Field, "FieldASTDisableCommentProtocol"]]: ...
+    ) -> Iterable[tuple[Field, "FieldASTDisableCommentProtocol"]]: ...
 
     def has_meta_var(self, name: str) -> bool: ...
 

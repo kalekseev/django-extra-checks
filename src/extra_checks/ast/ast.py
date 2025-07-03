@@ -10,6 +10,8 @@ from typing import (
 )
 
 from django.db import models
+from django.db.models.fields import Field
+from django.db.models.fields.related import RelatedField
 from django.utils.functional import SimpleLazyObject
 
 from extra_checks.check_id import CheckId
@@ -50,7 +52,7 @@ class ModelAST(DisableCommentProtocol, ModelASTProtocol):
         try:
             for node in self._nodes:
                 if predicate and predicate(node):
-                    self._meta = cast(ast.ClassDef, node)
+                    self._meta = cast("ast.ClassDef", node)
                     break
                 if isinstance(node, ast.Assign):
                     self._assignment_nodes.append(node)
@@ -86,13 +88,14 @@ class ModelAST(DisableCommentProtocol, ModelASTProtocol):
         return result
 
     @cached_property
-    def field_nodes(self) -> Iterable[tuple[models.fields.Field, "FieldAST"]]:
+    def field_nodes(self) -> Iterable[tuple[Field, "FieldAST"]]:
         for field in self.model_cls._meta.get_fields(include_parents=False):
-            if isinstance(field, models.Field):
+            if isinstance(field, Field):
                 yield (
                     field,
                     cast(
-                        FieldAST, SimpleLazyObject(partial(get_field_ast, self, field))
+                        "FieldAST",
+                        SimpleLazyObject(partial(get_field_ast, self, field)),
                     ),
                 )
 
@@ -111,7 +114,7 @@ class ModelAST(DisableCommentProtocol, ModelASTProtocol):
         return check in self._source_provider.get_disabled_checks_for_line(1)
 
 
-def get_field_ast(model_ast: ModelAST, field: models.Field) -> "FieldAST":
+def get_field_ast(model_ast: ModelAST, field: Field) -> "FieldAST":
     try:
         return FieldAST(
             model_ast._assignments[field.name], field, model_ast._source_provider
@@ -141,9 +144,7 @@ class ArgAST(ArgASTProtocol):
 
 
 class FieldAST(DisableCommentProtocol, FieldASTProtocol):
-    def __init__(
-        self, node: ast.Assign, field: models.Field, source_provider: SourceProvider
-    ):
+    def __init__(self, node: ast.Assign, field: Field, source_provider: SourceProvider):
         self._node = node
         self._field = field
         self._source_provider = source_provider
@@ -166,7 +167,7 @@ class FieldAST(DisableCommentProtocol, FieldASTProtocol):
         result = getattr(self._kwargs.get("verbose_name"), "value", None)
         if result:
             return result
-        if isinstance(self._field, models.fields.related.RelatedField):
+        if isinstance(self._field, RelatedField):
             return None
         if self._args:
             node = self._args[0]

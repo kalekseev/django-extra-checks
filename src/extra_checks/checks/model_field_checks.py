@@ -6,6 +6,8 @@ import django
 import django.core.checks
 from django import forms
 from django.db import models
+from django.db.models.fields import Field
+from django.db.models.fields.related import RelatedField
 
 from .. import CheckId
 from ..ast import FieldASTProtocol, MissingASTError
@@ -19,7 +21,7 @@ class CheckModelField(BaseCheck):
     @abstractmethod
     def apply(
         self,
-        field: models.fields.Field,
+        field: Field,
         *,
         ast: FieldASTProtocol,
         model: type[models.Model],
@@ -56,7 +58,7 @@ class CheckFieldVerboseName(CheckModelField):
     Id = CheckId.X050
 
     def apply(
-        self, field: models.fields.Field, ast: FieldASTProtocol, **kwargs: Any
+        self, field: Field, ast: FieldASTProtocol, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if not ast.get_arg("verbose_name"):
             yield self.message(
@@ -71,7 +73,7 @@ class CheckFieldVerboseNameGettext(GetTextMixin, CheckModelField):
     Id = CheckId.X051
 
     def apply(
-        self, field: models.fields.Field, ast: FieldASTProtocol, **kwargs: Any
+        self, field: Field, ast: FieldASTProtocol, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         verbose_name = ast.get_arg("verbose_name")
         if verbose_name and not (
@@ -98,7 +100,7 @@ class CheckFieldVerboseNameGettextCase(GetTextMixin, CheckModelField):
         )
 
     def apply(
-        self, field: models.fields.Field, ast: FieldASTProtocol, **kwargs: Any
+        self, field: Field, ast: FieldASTProtocol, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         verbose_name = ast.get_arg("verbose_name")
         if verbose_name and (
@@ -119,7 +121,7 @@ class CheckFieldHelpTextGettext(GetTextMixin, CheckModelField):
     Id = CheckId.X053
 
     def apply(
-        self, field: models.fields.Field, ast: FieldASTProtocol, **kwargs: Any
+        self, field: Field, ast: FieldASTProtocol, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         help_text = ast.get_arg("help_text")
         if help_text and not (
@@ -137,7 +139,7 @@ class CheckFieldFileUploadTo(CheckModelField):
     Id = CheckId.X054
 
     def apply(
-        self, field: models.fields.Field, **kwargs: Any
+        self, field: Field, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, models.FileField):
             if not field.upload_to:
@@ -153,7 +155,7 @@ class CheckFieldTextNull(CheckModelField):
     Id = CheckId.X055
 
     def apply(
-        self, field: models.fields.Field, **kwargs: Any
+        self, field: Field, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if isinstance(field, (models.CharField, models.TextField)):
             if field.null:
@@ -170,7 +172,7 @@ class CheckFieldNullFalse(CheckModelField):
     Id = CheckId.X057
 
     def apply(
-        self, field: models.fields.Field, ast: FieldASTProtocol, **kwargs: Any
+        self, field: Field, ast: FieldASTProtocol, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if field.null is False and ast.get_arg("null"):
             yield self.message(
@@ -218,11 +220,11 @@ class CheckFieldForeignKeyIndex(CheckModelField):
 
     def apply(
         self,
-        field: models.fields.Field,
+        field: Field,
         ast: FieldASTProtocol,
         model: type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if isinstance(field, models.fields.related.RelatedField):
+        if isinstance(field, RelatedField):
             if field.many_to_one and not ast.get_arg("db_index"):
                 if self.when == "indexes":
                     if field.name in self.get_fields_with_indexes_in_meta(model):
@@ -245,11 +247,11 @@ class CheckFieldRelatedName(CheckModelField):
 
     def apply(
         self,
-        field: models.fields.Field,
+        field: Field,
         ast: FieldASTProtocol,
         model: type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:
-        if isinstance(field, models.fields.related.RelatedField):
+        if isinstance(field, RelatedField):
             if not field.remote_field.related_name:
                 yield self.message(
                     "Related fields must set `related_name` explicitly.",
@@ -263,7 +265,7 @@ class CheckFieldDefaultNull(CheckModelField):
     Id = CheckId.X059
 
     def apply(
-        self, field: models.fields.Field, ast: FieldASTProtocol, **kwargs: Any
+        self, field: Field, ast: FieldASTProtocol, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if field.null and field.default is None and ast.get_arg("default"):
             yield self.message(
@@ -285,7 +287,7 @@ class CheckFieldChoicesConstraint(CheckModelField):
 
     def apply(
         self,
-        field: models.fields.Field,
+        field: Field,
         ast: FieldASTProtocol,
         model: type[models.Model],
     ) -> Iterator[django.core.checks.CheckMessage]:

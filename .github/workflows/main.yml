@@ -24,18 +24,18 @@ jobs:
           - "Django>=4.2,<5.0"
           - "Django>=5.0,<5.1"
           - "Django>=5.1,<5.2"
-          - "Django==5.2a1"
+          - "Django>=5.2,<6.0"
           # - "https://github.com/django/django/archive/main.tar.gz"
         include:
           - drf: djangorestframework
             python-version: "3.12"
-            django-version: "Django<5.2,>=5.0" # must be different from django-version
+            django-version: "Django<6.0,>=5.2" # must be different from django-version
         exclude:
           - django-version: "Django>=5.0,<5.1"
             python-version: 3.9
           - django-version: "Django>=5.1,<5.2"
             python-version: 3.9
-          - django-version: "Django==5.2a1"
+          - django-version: "Django>=5.2,<6.0"
             python-version: 3.9
           # - django-version: "https://github.com/django/django/archive/main.tar.gz"
           #   python-version: 3.8
