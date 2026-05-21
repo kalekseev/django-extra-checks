@@ -1,5 +1,5 @@
 from collections.abc import Iterable, Iterator
-from typing import Any, Optional
+from typing import Any
 
 import django.core.checks
 
@@ -10,9 +10,9 @@ from .base_checks import BaseCheck
 
 @registry.add_handler("extra_checks_selfcheck")
 def check_extra_checks_health(
-    checks: Iterable["CheckConfig"],
+    checks: Iterable[BaseCheck],
     config: ChecksConfig,
-    app_configs: Optional[list[Any]] = None,
+    app_configs: list[Any] | None = None,
     **kwargs: Any,
 ) -> Iterator[django.core.checks.CheckMessage]:
     for check in checks:

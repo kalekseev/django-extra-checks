@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, Optional, Protocol
+from typing import Any, Protocol
 
 from django.db.models.fields import Field
 
@@ -9,13 +9,13 @@ class ArgASTProtocol(Protocol):
     def is_callable(self) -> bool: ...
 
     @property
-    def callable_func_name(self) -> Optional[str]: ...
+    def callable_func_name(self) -> str | None: ...
 
     def get_call_first_args(self) -> Any: ...
 
 
 class FieldASTProtocol(Protocol):
-    def get_arg(self, name: str) -> Optional[ArgASTProtocol]: ...
+    def get_arg(self, name: str) -> ArgASTProtocol | None: ...
 
 
 class ModelASTProtocol(Protocol):

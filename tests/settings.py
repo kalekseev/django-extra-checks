@@ -32,7 +32,7 @@ EXTRA_CHECKS = {
 }
 
 _checks = [c["id"] if isinstance(c, dict) else c for c in EXTRA_CHECKS["checks"]]
-EXTRA_CHECKS["checks"].extend(list(CheckId._value2member_map_.keys() - _checks))  # type: ignore
+EXTRA_CHECKS["checks"].extend(list(CheckId._value2member_map_.keys() - _checks))  # type: ignore[attr-defined]
 
 DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3"}}
 TEMPLATES = [

@@ -1,4 +1,3 @@
-import django
 import pytest
 
 from extra_checks.checks import model_checks, model_field_checks
@@ -61,7 +60,7 @@ def test_check_field_verbose_name_gettext_case(test_case):
 
 
 def test_check_field_verbose_name_gettext_check_case():
-    is_invalid = model_field_checks.CheckFieldVerboseNameGettextCase.is_invalid
+    is_invalid = model_field_checks.CheckFieldVerboseNameGettextCase.is_invalid  # ty: ignore[unresolved-attribute]
     assert is_invalid("Abc Def")
     assert not is_invalid("abc def")
     assert not is_invalid("ABC def")
@@ -138,7 +137,6 @@ def test_check_field_foreign_key_index(test_case):
         .run()
     )
     assert {m.obj.name for m in messages} == {
-        *(["field_one"] if django.VERSION < (5, 1) else []),
         "author",
         "field_three",
         "field_in_indexes",
@@ -241,18 +239,17 @@ def test_field_choices_constraint(test_case):
         "blank_included",
         "integer_blank_invalid",
     }
-    arg_name = "condition" if django.VERSION >= (5, 1) else "check"
-    assert f'{arg_name}=models.Q(partial__in=["S", "C"]))' in errors["partial"].hint
-    assert f"{arg_name}=models.Q(missed__in=[1, 2]))" in errors["missed"].hint
+    assert 'condition=models.Q(partial__in=["S", "C"]))' in errors["partial"].hint
+    assert "condition=models.Q(missed__in=[1, 2]))" in errors["missed"].hint
     assert (
-        f'{arg_name}=models.Q(blank_missed__in=["A", "B", ""])'
+        'condition=models.Q(blank_missed__in=["A", "B", ""])'
         in errors["blank_missed"].hint
     )
     assert (
-        f'{arg_name}=models.Q(blank_included__in=["A", "B", ""])'
+        'condition=models.Q(blank_included__in=["A", "B", ""])'
         in errors["blank_included"].hint
     )
     assert (
-        f"{arg_name}=models.Q(integer_blank_invalid__in=[1, 2])"
+        "condition=models.Q(integer_blank_invalid__in=[1, 2])"
         in errors["integer_blank_invalid"].hint
     )

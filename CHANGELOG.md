@@ -2,6 +2,12 @@
 
 ### Unreleased
 
+### 0.17.0
+
+- drop python 3.9 support
+- add python 3.14 support
+- add django 6.0 support
+
 ### 0.17.0a1
 
 - drop python 3.8 support

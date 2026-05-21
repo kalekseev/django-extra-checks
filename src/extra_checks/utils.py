@@ -1,12 +1,12 @@
 from collections.abc import Iterable, Iterator
-from typing import Optional, TypeVar
+from typing import TypeVar
 
 TBase = TypeVar("TBase")
 
 
 def collect_subclasses(
     bases: Iterable[type[TBase]],
-    visited: Optional[set[type[TBase]]] = None,
+    visited: set[type[TBase]] | None = None,
 ) -> Iterator[type[TBase]]:
     visited = visited or set()
     for cls in bases:

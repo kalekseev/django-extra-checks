@@ -19,29 +19,20 @@ jobs:
     strategy:
       matrix:
         # https://github.com/actions/python-versions/blob/main/versions-manifest.json
-        python-version: [3.9, "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         django-version:
-          - "Django>=4.2,<5.0"
-          - "Django>=5.0,<5.1"
-          - "Django>=5.1,<5.2"
           - "Django>=5.2,<6.0"
+          - "Django>=6.0,<6.1"
           # - "https://github.com/django/django/archive/main.tar.gz"
         include:
           - drf: djangorestframework
-            python-version: "3.12"
+            python-version: "3.13"
             django-version: "Django<6.0,>=5.2" # must be different from django-version
         exclude:
-          - django-version: "Django>=5.0,<5.1"
-            python-version: 3.9
-          - django-version: "Django>=5.1,<5.2"
-            python-version: 3.9
-          - django-version: "Django>=5.2,<6.0"
-            python-version: 3.9
-          # - django-version: "https://github.com/django/django/archive/main.tar.gz"
-          #   python-version: 3.8
-          # - django-version: "https://github.com/django/django/archive/main.tar.gz"
-          #   python-version: 3.9
-          #
+          - django-version: "Django>=6.0,<6.1"
+            python-version: 3.10
+          - django-version: "Django>=6.0,<6.1"
+            python-version: 3.11
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -50,9 +41,9 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
       - name: Patch pyproject.toml
-        if: "matrix.python-version != '3.9'"
+        if: "matrix.django-version != '5.2'"
         run: |
-          sed -i 's/requires-python = ">=3.9"/requires-python = ">=3.10"/' pyproject.toml
+          sed -i 's/requires-python = ">=3.10"/requires-python = ">=3.12"/' pyproject.toml
       - name: Install deps
         run: |
           uv add --group test "${{ matrix.django-version }}" ${{ matrix.drf }}
@@ -68,7 +59,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - name: Install uv
         uses: astral-sh/setup-uv@v5
       - uses: actions/cache@v4
@@ -120,7 +111,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - name: Download dist
         uses: actions/download-artifact@v4
         with:

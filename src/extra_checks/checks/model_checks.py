@@ -1,7 +1,7 @@
 import site
 from abc import abstractmethod
 from collections.abc import Iterable, Iterator
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Union
 
 import django.core.checks
 from django import forms
@@ -22,8 +22,8 @@ if TYPE_CHECKING:
 
 def _get_models_to_check(
     *,
-    app_configs: Optional[list[Any]] = None,
-    include_apps: Optional[Iterable[str]] = None,
+    app_configs: list[Any] | None = None,
+    include_apps: Iterable[str] | None = None,
 ) -> Iterator[type[models.Model]]:
     apps_ = apps.get_app_configs() if app_configs is None else app_configs
     if include_apps is not None:
@@ -40,10 +40,10 @@ def _get_models_to_check(
 def check_models(
     checks: Iterable[Union["CheckModel", "CheckModelField", "CheckModelMeta"]],
     config: ChecksConfig,
-    app_configs: Optional[list[Any]] = None,
+    app_configs: list[Any] | None = None,
     **kwargs: Any,
 ) -> Iterator[Any]:
-    model_checks: list[Union[CheckModel, CheckModelMeta]] = []
+    model_checks: list[CheckModel | CheckModelMeta] = []
     field_checks = []
     meta_checks = []
     for check in checks:
