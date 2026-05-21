@@ -1,8 +1,7 @@
 from abc import abstractmethod
 from collections.abc import Iterator
-from typing import Any, Optional
+from typing import Any
 
-import django
 import django.core.checks
 from django import forms
 from django.db import models
@@ -29,7 +28,7 @@ class CheckModelField(BaseCheck):
         raise NotImplementedError()
 
     def __call__(
-        self, obj: Any, ast: Optional[DisableCommentProtocol] = None, **kwargs: Any
+        self, obj: Any, ast: DisableCommentProtocol | None = None, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         try:
             yield from super().__call__(obj, ast=ast, **kwargs)
@@ -202,9 +201,6 @@ class CheckFieldForeignKeyIndex(CheckModelField):
     def get_index_values_in_meta(cls, model: type[models.Model]) -> Iterator[str]:
         for entry in model._meta.unique_together:
             yield from entry
-        if django.VERSION < (5, 1):
-            for entry in model._meta.index_together:
-                yield from entry
         for constraint in model._meta.constraints:
             if isinstance(constraint, models.UniqueConstraint):
                 yield from constraint.fields
@@ -299,24 +295,19 @@ class CheckFieldChoicesConstraint(CheckModelField):
             in_name = f"{field.name}__in"
             for constraint in model._meta.constraints:
                 if isinstance(constraint, models.CheckConstraint):
-                    condition = (
-                        constraint.check
-                        if django.VERSION < (5, 1)
-                        else constraint.condition
-                    )
+                    condition = constraint.condition
                     if not isinstance(condition, models.Q):
                         continue
                     for entry in condition.children:
                         if (
                             isinstance(entry, tuple)
                             and entry[0] == in_name
-                            and set(field_choices) == set(entry[1])
+                            and set(field_choices) == set(entry[1])  # ty: ignore[invalid-argument-type]
                         ):
                             return
             check = f"models.Q({in_name}=[{', '.join([self._repr_choice(c) for c in field_choices])}])"
-            arg_name = "condition" if django.VERSION >= (5, 1) else "check"
             yield self.message(
                 "Field with choices must have companion CheckConstraint to enforce choices on database level.",
-                hint=f'Add to Meta.constraints: `models.CheckConstraint(name="%(app_label)s_%(class)s_{field.name}_valid", {arg_name}={check})`',
+                hint=f'Add to Meta.constraints: `models.CheckConstraint(name="%(app_label)s_%(class)s_{field.name}_valid", condition={check})`',
                 obj=field,
             )

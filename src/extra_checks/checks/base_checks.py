@@ -1,12 +1,10 @@
 import warnings
 from abc import ABC, abstractmethod
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     ClassVar,
-    Optional,
 )
 
 import django.core.checks
@@ -31,10 +29,10 @@ class BaseCheck(ABC):
 
     def __init__(
         self,
-        level: Optional[int] = None,
-        ignore_objects: Optional[set[Any]] = None,
-        ignore_types: Optional[set] = None,
-        skipif: Optional[Callable] = None,
+        level: int | None = None,
+        ignore_objects: set[Any] | None = None,
+        ignore_types: set | None = None,
+        skipif: Callable | None = None,
     ) -> None:
         self.level = level or self.level
         self.ignore_objects = ignore_objects or set()
@@ -44,7 +42,7 @@ class BaseCheck(ABC):
             warnings.warn(warning, FutureWarning, stacklevel=2)
 
     def __call__(
-        self, obj: Any, ast: Optional[DisableCommentProtocol] = None, **kwargs: Any
+        self, obj: Any, ast: DisableCommentProtocol | None = None, **kwargs: Any
     ) -> Iterator[django.core.checks.CheckMessage]:
         if not self.is_ignored(obj):
             for error in self.apply(obj, ast=ast, **kwargs):
@@ -57,7 +55,7 @@ class BaseCheck(ABC):
         return obj in self.ignore_objects or type(obj) in self.ignore_types
 
     def message(
-        self, message: str, hint: Optional[str] = None, obj: Any = None
+        self, message: str, hint: str | None = None, obj: Any = None
     ) -> django.core.checks.CheckMessage:
         return MESSAGE_MAP[self.level](
             message + f" [{self.Id.value}]", hint=hint, obj=obj, id=self.Id.name

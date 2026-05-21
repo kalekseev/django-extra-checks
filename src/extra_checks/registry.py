@@ -1,11 +1,8 @@
-from collections.abc import Iterable, Iterator, Sequence
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from functools import partial
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
-    Optional,
-    Union,
 )
 
 import django.apps
@@ -23,10 +20,10 @@ class ChecksConfig:
     def __init__(
         self,
         *,
-        errors: Optional[dict] = None,
-        checks: Optional[dict[CheckId, dict]] = None,
-        include_apps: Optional[Iterable[str]] = None,
-        ignored_objects: Optional[dict[CheckId, set[Any]]] = None,
+        errors: dict | None = None,
+        checks: dict[CheckId, dict] | None = None,
+        include_apps: Iterable[str] | None = None,
+        ignored_objects: dict[CheckId, set[Any]] | None = None,
     ) -> None:
         self.checks: dict[CheckId, dict] = {**(checks or {}), CheckId.X001: {}}
         self.include_apps = include_apps
@@ -37,7 +34,7 @@ class ChecksConfig:
     def create(
         cls,
         include_checks: dict["type[BaseCheck]", Sequence[str]],
-        ignore_checks: Optional[dict[Any, set[Union[str, CheckId]]]] = None,
+        ignore_checks: dict[Any, set[str | CheckId]] | None = None,
     ) -> "ChecksConfig":
         check_forms = {r.Id: r.settings_form_class for r in include_checks}
         if not hasattr(settings, "EXTRA_CHECKS"):
@@ -52,7 +49,7 @@ class ChecksConfig:
 
     @staticmethod
     def _build_ignored(
-        ignore_checks: dict[Any, set[Union[str, CheckId]]],
+        ignore_checks: dict[Any, set[str | CheckId]],
     ) -> tuple[dict[CheckId, set[Any]], list[str]]:
         errors = []
         ignored: dict[CheckId, set] = {}
@@ -68,16 +65,16 @@ class ChecksConfig:
         return ignored, errors
 
 
-_ChecksHandler = Callable[[Optional[list[Any]], Any], Iterator[Any]]
+_ChecksHandler = Callable[[list[Any] | None, Any], Iterator[Any]]
 
 
 class Registry:
     def __init__(self) -> None:
         self.registered_checks: dict[type[BaseCheck], Sequence[str]] = {}
         self.enabled_checks: dict[str, list[BaseCheck]] = {}
-        self.ignored_checks: dict[Any, set[Union[CheckId, str]]] = {}
+        self.ignored_checks: dict[Any, set[CheckId | str]] = {}
         self.handlers: dict[str, _ChecksHandler] = {}
-        self._config: Optional[ChecksConfig] = None
+        self._config: ChecksConfig | None = None
 
     def _register(
         self, tags: Sequence[str], check_class: "type[BaseCheck]"
@@ -95,10 +92,10 @@ class Registry:
         handler: _ChecksHandler,
         checks: list["BaseCheck"],
         config: ChecksConfig,
-    ) -> Optional[Callable]:
+    ) -> Callable | None:
         if checks:
             f = partial(handler, checks, config)
-            django.core.checks.register(f, tag)  # pyright: ignore
+            django.core.checks.register(f, tag)  # pyright: ignore  # ty: ignore[no-matching-overload]
             return f
         return None
 

@@ -5,7 +5,6 @@ from collections.abc import Iterable, Iterator
 from typing import (
     TYPE_CHECKING,
     Any,
-    Optional,
     Union,
     cast,
 )
@@ -36,7 +35,7 @@ class DisableCommentProvider(DisableCommentProtocol):
     def _source_provider(self) -> SourceProvider:
         return SourceProvider(self.serializer_class)
 
-    def _get_line(self) -> Optional[int]:
+    def _get_line(self) -> int | None:
         return 1
 
     def is_disabled_by_comment(self, check_id: str) -> bool:
@@ -49,7 +48,7 @@ class DisableCommentProvider(DisableCommentProtocol):
 
 
 class DisableMetaCommentProvider(DisableCommentProvider):
-    def _get_line(self) -> Optional[int]:
+    def _get_line(self) -> int | None:
         lines = (self._source_provider.source or "").splitlines()
         # find line starting with `class Meta` and lowest indent
         try:
@@ -67,7 +66,7 @@ class DisableMetaCommentProvider(DisableCommentProvider):
 
 def _filter_app_serializers(
     serializers: Iterable[type[Serializer]],
-    include_apps: Optional[Iterable[str]] = None,
+    include_apps: Iterable[str] | None = None,
 ) -> Iterator[type[Serializer]]:
     site_prefixes = set(site.PREFIXES)
     if include_apps is not None:
@@ -90,7 +89,7 @@ def _filter_app_serializers(
 
 
 def _get_serializers_to_check(
-    include_apps: Optional[Iterable[str]] = None,
+    include_apps: Iterable[str] | None = None,
 ) -> tuple[Iterator[type[Serializer]], Iterator[type[ModelSerializer]]]:
     serializer_classes = _filter_app_serializers(
         collect_subclasses(
@@ -103,7 +102,7 @@ def _get_serializers_to_check(
     )
     return (
         serializer_classes,
-        cast("Iterator[type[ModelSerializer]]", model_serializer_classes),  # ty: ignore[redundant-cast]
+        cast("Iterator[type[ModelSerializer]]", model_serializer_classes),
     )
 
 
@@ -117,7 +116,7 @@ def check_drf_serializers(
         ]
     ],
     config: ChecksConfig,
-    app_configs: Optional[list[Any]] = None,
+    app_configs: list[Any] | None = None,
     **kwargs: Any,
 ) -> Iterator[Any]:
     model_serializer_checks = []

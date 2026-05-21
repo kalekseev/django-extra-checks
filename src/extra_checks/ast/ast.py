@@ -1,11 +1,9 @@
 import ast
-from collections.abc import Container, Iterable, Iterator
+from collections.abc import Callable, Container, Iterable, Iterator
 from functools import partial
 from typing import (
     TYPE_CHECKING,
-    Callable,
-    Optional,
-    Union,
+    Any,
     cast,
 )
 
@@ -36,7 +34,7 @@ class ModelAST(DisableCommentProtocol, ModelASTProtocol):
         self.model_cls = model_cls
         self.meta_checks = meta_checks
         self._assignment_nodes: list[ast.Assign] = []
-        self._meta: Optional[ast.ClassDef] = None
+        self._meta: ast.ClassDef | None = None
 
     @cached_property
     def _source_provider(self) -> SourceProvider:
@@ -48,7 +46,7 @@ class ModelAST(DisableCommentProtocol, ModelASTProtocol):
             return iter([])
         return iter(ast.parse(self._source_provider.source).body[0].body)  # type: ignore
 
-    def _parse(self, predicate: Optional[Callable[[ast.AST], bool]] = None) -> None:
+    def _parse(self, predicate: Callable[[ast.AST], bool] | None = None) -> None:
         try:
             for node in self._nodes:
                 if predicate and predicate(node):
@@ -61,7 +59,7 @@ class ModelAST(DisableCommentProtocol, ModelASTProtocol):
         return
 
     @cached_property
-    def _meta_node(self) -> Optional[ast.ClassDef]:
+    def _meta_node(self) -> ast.ClassDef | None:
         if not self._meta:
             self._parse(
                 lambda node: isinstance(node, ast.ClassDef) and node.name == "Meta"
@@ -104,7 +102,7 @@ class ModelAST(DisableCommentProtocol, ModelASTProtocol):
 
     def is_disabled_by_comment(self, check_id: str) -> bool:
         check = CheckId.find_check(check_id)
-        if check in self.meta_checks:
+        if check is not None and check in self.meta_checks:
             if not self._meta_node:
                 # class Meta is not defined on model
                 return False
@@ -132,15 +130,18 @@ class ArgAST(ArgASTProtocol):
         return isinstance(self._node, ast.Call)
 
     @cached_property
-    def callable_func_name(self) -> Optional[str]:
+    def callable_func_name(self) -> str | None:
         return (
             getattr(self._node.func, "id", None)
             if isinstance(self._node, ast.Call)
             else None
         )
 
-    def get_call_first_args(self) -> str:
-        return self._node.args[0].s  # type: ignore
+    def get_call_first_args(self) -> Any:
+        node = self._node.args[0]  # type: ignore
+        return (
+            node.value if isinstance(node, ast.Constant) else getattr(node, "s", None)
+        )
 
 
 class FieldAST(DisableCommentProtocol, FieldASTProtocol):
@@ -157,13 +158,13 @@ class FieldAST(DisableCommentProtocol, FieldASTProtocol):
     def _kwargs(self) -> dict[str, ast.keyword]:
         return {kw.arg: kw for kw in self._node.value.keywords if kw.arg}  # type: ignore
 
-    def get_arg(self, name: str) -> Optional[ArgASTProtocol]:
+    def get_arg(self, name: str) -> ArgASTProtocol | None:
         if name == "verbose_name":
             return ArgAST(self._verbose_name) if self._verbose_name else None
         return ArgAST(self._kwargs[name].value) if name in self._kwargs else None
 
     @cached_property
-    def _verbose_name(self) -> Union[None, ast.Constant, ast.Call]:
+    def _verbose_name(self) -> None | ast.Constant | ast.Call:
         result = getattr(self._kwargs.get("verbose_name"), "value", None)
         if result:
             return result
@@ -173,7 +174,7 @@ class FieldAST(DisableCommentProtocol, FieldASTProtocol):
             node = self._args[0]
             if isinstance(node, ast.Call) and hasattr(node.func, "id"):
                 return node
-            elif isinstance(node, (ast.Constant, ast.Str)):
+            elif isinstance(node, ast.Constant):
                 return node
         return None
 

@@ -2,7 +2,7 @@ import inspect
 import re
 import textwrap
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from extra_checks.check_id import ALL_CHECKS_NAMES, CheckId
 
@@ -15,7 +15,7 @@ else:
 DISABLE_COMMENT_PATTERN = r"^#\s*extra-checks-disable-next-line(?:\s+(.*))?$"
 
 
-def _parse_comment(checks: Optional[str]) -> set[str]:
+def _parse_comment(checks: str | None) -> set[str]:
     if not checks:
         return ALL_CHECKS_NAMES  # type: ignore
     result = set()
@@ -41,7 +41,7 @@ class SourceProvider:
         self._comments_cache: dict[int, set[str]] = {}
 
     @cached_property
-    def source(self) -> Optional[str]:
+    def source(self) -> str | None:
         try:
             return textwrap.dedent(inspect.getsource(self._obj))
         except (TypeError, OSError):

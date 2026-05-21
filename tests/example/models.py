@@ -1,4 +1,3 @@
-import django
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
@@ -129,8 +128,6 @@ class ModelFieldForeignKeyIndex(models.Model):
 
     class Meta:
         unique_together = [("author", "article")]
-        if django.VERSION < (5, 1):
-            index_together = ("field_one", "field_two")
         constraints = [
             models.UniqueConstraint(
                 fields=("author", "field_three"), name="fi_author_field_unique"
@@ -179,30 +176,31 @@ class ChoicesConstraint(models.Model):
     class Meta:
         constraints = [
             models.CheckConstraint(
-                name="partial_valid", check=models.Q(name__in=["S"])
+                name="partial_valid", condition=models.Q(name__in=["S"])
             ),
             models.CheckConstraint(
-                name="covered_valid", check=models.Q(covered__in=("A", "B"))
+                name="covered_valid", condition=models.Q(covered__in=("A", "B"))
             ),
             models.CheckConstraint(
-                name="blank_valid", check=models.Q(blank__in=("A", "B", ""))
+                name="blank_valid", condition=models.Q(blank__in=("A", "B", ""))
             ),
             models.CheckConstraint(
-                name="blank_missed_valid", check=models.Q(blank_missed__in=("A", "B"))
+                name="blank_missed_valid",
+                condition=models.Q(blank_missed__in=("A", "B")),
             ),
             models.CheckConstraint(
-                name="grouped_valid", check=models.Q(grouped__in=(1, 2, 3))
+                name="grouped_valid", condition=models.Q(grouped__in=(1, 2, 3))
             ),
             models.CheckConstraint(
-                name="integer_blank", check=models.Q(integer_blank__in=(1, 2))
+                name="integer_blank", condition=models.Q(integer_blank__in=(1, 2))
             ),
             models.CheckConstraint(
                 name="integer_blank_invalid",
-                check=models.Q(integer_blank_invalid__in=(1, 2, "")),
+                condition=models.Q(integer_blank_invalid__in=(1, 2, "")),
             ),
             models.CheckConstraint(
                 name="unrelated_constraint",
-                check=(
+                condition=(
                     models.Q(url=None)
                     | (
                         (

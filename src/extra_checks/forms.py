@@ -39,7 +39,7 @@ class FilterField(forms.Field):
         "invalid_callable": _("%(value)s is not valid callable for skipif."),
     }
 
-    def to_python(self, value: typing.Any) -> typing.Optional[typing.Callable]:
+    def to_python(self, value: typing.Any) -> typing.Callable | None:
         if not value:
             return None
         if not callable(value):
@@ -192,7 +192,7 @@ class BaseCheckForm(forms.Form):
     )
     skipif = FilterField(required=False)
 
-    def clean_level(self) -> typing.Optional[int]:
+    def clean_level(self) -> int | None:
         if self.cleaned_data["level"]:
             return getattr(django.core.checks, self.cleaned_data["level"])
         return None
